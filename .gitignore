@@ -1,0 +1,8 @@
+# env variables
+.env
+.flaskenv
+# database
+instance/
+*.db
+# pycache
+__pycache__/

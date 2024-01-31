@@ -1,0 +1,16 @@
+<nav class="navbar navbar-expand-lg navbar-light navbar-analyzer">
+    <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='/images/TwinBarras.png') }}" height="50" class="d-inline-block align-top" alt="">
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="/">Home<span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+        <button class="btn btn-danger my-2 my-sm-0" @click="logout">Logout</button>
+    </div>
+</nav>
