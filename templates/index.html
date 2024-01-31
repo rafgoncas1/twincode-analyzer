@@ -10,7 +10,8 @@
                     <div class="d-flex flex-row align-items-center">
                         <button @click="addRemoveFavourite(session)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: session.favourite ? 'gold' : 'black' }">star</button>
                     </div>
-                    <div class="badge" v-if="session.analyzed"> <span data-color="green">Analyzed</span> </div>
+                    <div class="badge" v-if="session.status=='completed'"> <span data-color="green">Analyzed</span> </div>
+                    <div class="badge" v-else-if="session.status=='running'"> <span data-color="blue">Running</span> </div>
                     <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
                 </div>
                 <div class="mt-5">

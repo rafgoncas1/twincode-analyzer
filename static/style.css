@@ -91,6 +91,12 @@ footer p:hover {
     color: #f44336;
 }
 
+.badge span[data-color="blue"] {
+    background-color: #e3f2fd;
+    color: #2196f3;
+    animation: blink 1.5s linear infinite;
+}
+
 .badge span {
     background-color: #fffbec;
     min-width: 60px;

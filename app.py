@@ -15,7 +15,8 @@ db = SQLAlchemy(app)
 class Session(db.Model):
     name = db.Column(db.String(80), primary_key=True)
     favourite = db.Column(db.Boolean)
-    analyzed = db.Column(db.Boolean)
+    # Satatus: 'completed', 'running', 'pending'
+    status = db.Column(db.String(80))
 
 with app.app_context():
     db.create_all()
@@ -66,11 +67,11 @@ def api_sessions():
                 db_session = Session.query.get(session['name'])
                 if db_session:
                     session['favourite'] = db_session.favourite
-                    session['analyzed'] = random.choice([True, False])
+                    session['status'] = random.choice(["pending", "completed", "running"])
                 else:
                     session['favourite'] = False
-                    session['analyzed'] = False
-                    db.session.add(Session(name=session['name'], favourite=False, analyzed=False))
+                    session['status'] = False
+                    db.session.add(Session(name=session['name'], favourite=False, status="pending"))
             db.session.commit()
             return jsonify(sessions), 200
         else:
