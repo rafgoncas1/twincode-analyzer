@@ -33,15 +33,15 @@
                 <div class="mt-5" v-else-if="session.status=='completed'">
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
-                            <button @click="viewAnalysis(session)" class="btn btn-success mr-2">View</button>
-                            <button @click="startAnalysis(session)" class="btn btn-secondary">Restart</button>
+                            <button @click="viewAnalysis(session)" class="btn btn-success mr-2" style="height: 40px;">View</button>
+                            <button @click="startAnalysis(session)" class="btn btn-danger" style="height: 40px;">Restart</button>
                         </div>
                     </div>
                 </div>
                 <div class="mt-5" v-else>
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
-                            <button @click="startAnalysis(session)" class="btn btn-primary">Start</button>
+                            <button @click="startAnalysis(session)" class="btn btn-primary" style="height: 40px;">Start</button>
                         </div>
                     </div>
             </div>

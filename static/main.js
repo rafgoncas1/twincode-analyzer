@@ -141,6 +141,27 @@ const app = {
             this.favourites = false;
             this.statusFilter = 'all';
             this.searchTerm = '';
+        },
+
+        viewAnalysis(session) {
+            window.location.href = '/analysis/' + session.name;
+        },
+
+        startAnalysis(session) {
+            fetch('/api/analysis/' + session.name, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Analysis failed for " + session.name);
+                }
+            })
+            .catch((error) => {
+                this.notification = {title: session.name, message: error.message, error: true};
+            });
         }
     },
 };
