@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 import requests
 import json
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import CheckConstraint
 import random
 
 app = Flask(__name__)
@@ -14,9 +15,12 @@ db = SQLAlchemy(app)
 
 class Session(db.Model):
     name = db.Column(db.String(80), primary_key=True)
-    favourite = db.Column(db.Boolean)
+    favourite = db.Column(db.Boolean, default=False, nullable=False)
     # Satatus: 'completed', 'running', 'pending'
-    status = db.Column(db.String(80))
+    status = db.Column(db.String(80), default="pending", nullable=False)
+    __table_args__ = (CheckConstraint("status IN ('completed', 'running', 'pending')", name='status_check'), )
+    percentage = db.Column(db.Integer, default=0, nullable=False)
+    __table_args__ = (CheckConstraint('0<=percentage AND percentage<=100', name='percentage_check'), )
 
 with app.app_context():
     db.create_all()
@@ -68,10 +72,12 @@ def api_sessions():
                 if db_session:
                     session['favourite'] = db_session.favourite
                     session['status'] = random.choice(["pending", "completed", "running"])
+                    session['percentage'] = random.randint(0, 100)
                 else:
                     session['favourite'] = False
                     session['status'] = False
-                    db.session.add(Session(name=session['name'], favourite=False, status="pending"))
+                    session['percentage'] = 0
+                    db.session.add(Session(name=session['name']))
             db.session.commit()
             return jsonify(sessions), 200
         else:

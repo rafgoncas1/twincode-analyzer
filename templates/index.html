@@ -5,24 +5,24 @@
     <button id="filter-button" @click="favourites = !favourites" class="material-icons btn-filter mb-4" style="font-size:30px;" v-bind:style="{ color: favourites ? 'gold' : 'black' }">star</button>        
     
     <div class="grid-container">
-            <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2">
-                <div class="d-flex justify-content-between">
-                    <div class="d-flex flex-row align-items-center">
-                        <button @click="addRemoveFavourite(session)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: session.favourite ? 'gold' : 'black' }">star</button>
-                    </div>
-                    <div class="badge" v-if="session.status=='completed'"> <span data-color="green">Analyzed</span> </div>
-                    <div class="badge" v-else-if="session.status=='running'"> <span data-color="blue">Running</span> </div>
-                    <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
+        <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2">
+            <div class="d-flex justify-content-between">
+                <div class="d-flex flex-row align-items-center">
+                    <button @click="addRemoveFavourite(session)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: session.favourite ? 'gold' : 'black' }">star</button>
                 </div>
-                <div class="mt-5">
-                    <h3 class="heading">[[session.name]]</h3>
-                    <div class="mt-5">
-                        <div class="progress">
-                            <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <div class="mt-3"> <span class="text1">Analyzing session...</span> </div>
+                <div class="badge" v-if="session.status=='completed'"> <span data-color="green">Analyzed</span> </div>
+                <div class="badge" v-else-if="session.status=='running'"> <span data-color="blue">Running</span> </div>
+                <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
+            </div>
+            <div class="mt-5">
+                <h3 class="heading">[[session.name]]</h3>
+                <div class="mt-5" v-if="session.status=='running'">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: session.percentage + '%' }" :aria-valuenow="session.percentage" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
+                    <div class="mt-3"> <span class="text1">Analyzing session...</span> </div>
                 </div>
             </div>
+        </div>
     </div>
 {% endblock %}
