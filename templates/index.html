@@ -9,6 +9,7 @@
             <button id="filter-button" @click="removeFilters" class="material-icons btn-filter mb-4 mr-2 trash" style="height: 50px;">delete</button>
         </div>
     </div>
+    <hr v-if="sessions.length > 0">
     <div class="grid-container">
         <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2" style="height: 260px;">
             <div class="d-flex justify-content-between">
