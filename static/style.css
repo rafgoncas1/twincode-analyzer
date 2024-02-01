@@ -116,10 +116,11 @@ footer p:hover {
     padding: 10px 20px;
     cursor: pointer;
     transition: background-color 0.5s ease;  /* Agrega esta línea */
+    transition: color 0.3s ease;  /* Agrega esta línea */
 }
 
 .btn-filter:hover {
-    background-color: rgb(116, 155, 194);
+    background-color: #e6e6e6;
 }
 
 @keyframes blink {
@@ -134,4 +135,8 @@ footer p:hover {
     max-width: 300px;
     z-index: 9999;
     animation: blink 5s linear infinite;
+}
+
+.trash:hover {
+    color: #f44336;
 }

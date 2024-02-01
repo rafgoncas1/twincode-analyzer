@@ -11,14 +11,23 @@ const app = {
             sessions: [],
             notification: null,
             favourites: false,
+            statusFilter: 'all',
+            searchTerm: '',
         }
     },
     computed: {
         filteredSessions() {
+            res = this.sessions;
             if (this.favourites) {
-                return this.sessions.filter(session => session.favourite);
+                res = this.sessions.filter(session => session.favourite);
             }
-            return this.sessions;
+            if (this.statusFilter != 'all') {
+                res = res.filter(session => session.status == this.statusFilter);
+            }
+            if (this.searchTerm != '') {
+                res = res.filter(session => session.name.includes(this.searchTerm));
+            }
+            return res;
         }
     },
 
@@ -115,6 +124,24 @@ const app = {
                 this.notification = {title: session.name, message: error.message, error: true};
             });
         },
+
+        nextStatusFilter() {
+            if (this.statusFilter == 'all') {
+                this.statusFilter = 'completed';
+            } else if (this.statusFilter == 'completed') {
+                this.statusFilter = 'running';
+            } else if (this.statusFilter == 'running') {
+                this.statusFilter = 'pending';
+            } else {
+                this.statusFilter = 'all';
+            }
+        },
+
+        removeFilters() {
+            this.favourites = false;
+            this.statusFilter = 'all';
+            this.searchTerm = '';
+        }
     },
 };
 
