@@ -2,17 +2,16 @@
 
 {% block content %}
     
-    <div class="mx-auto h-ful flex justify-center items-center">
-        <h1 class="mb-6 text-center font-hairline text-3xl inline-block">Login to
-        <img
-        class="mb-3 ml-2 inline-block"
-        src="{{ url_for('static', filename='/images/TwinBarras.png') }}"
-        width="400"
-        />
-        </h1>
-        
+    <div class="d-flex justify-content-center align-items-center">
+        <div class="mx-auto">
+            <img
+                class="mb-3 img-fluid"
+                src="{{ url_for('static', filename='/images/TwinBarras.png') }}"
+                style="max-width: 400px; width: 100%;"
+            />
+        </div>
     </div>
-    <div class="card-login mx-auto h-ful flex">
+    <div class="card-login mx-auto">
         <div class="alert alert-danger" role="alert" v-if="errorMessage">
             [[errorMessage]]
         </div>
