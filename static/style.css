@@ -52,7 +52,7 @@ body {
 }
 
 .navbar-analyzer {
-    background-color: rgba(145, 200, 228, 0.5);
+    background: linear-gradient(90deg, rgba(197,220,245,1) 0%, rgba(255,255,255,0) 50%, rgba(197,220,245,1) 100%);
 }
 
 footer {
@@ -60,20 +60,13 @@ footer {
 	left: 0;
 	bottom: 0;
 	width: 100%;
-	background: rgb(255,255,255);
-	background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(197,220,245,0.8225490879945728) 50%, rgba(255,255,255,0) 100%);  	
+	background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(197,220,245,1) 50%, rgba(255,255,255,0) 100%);  	
 	color: white;
 	text-align: center;
-	margin-top: auto;
-	padding: 0.6em;
 }
 
 footer p {
-	color: #4f868c;
-}
-
-footer p:hover {
-	color: #39696e;
+	color: #2c3e50;
 }
 
 .btn-light {
@@ -111,7 +104,7 @@ footer p:hover {
 
 .btn-filter {
     background-color: #fff;
-    border: black 2px solid;
+    border: black 1px solid;
     border-radius: 5px;
     padding: 10px 20px;
     cursor: pointer;
@@ -130,9 +123,11 @@ footer p:hover {
 
 .notification {
     position: fixed;
-    top: 90px;
-    right: 20px;
-    max-width: 10%;
+    bottom: 40px;
+    left: 50%;  /* Agrega esta línea */
+    transform: translateX(-50%);  /* Agrega esta línea */
+    min-width: 50%;
+    max-width: 100%;
     z-index: 9999;
     animation: blink 5s linear infinite;
 }

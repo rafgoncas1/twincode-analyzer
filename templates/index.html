@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4" v-if="sessions.length > 0">
-        <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control mb-2 mb-md-0 mr-5" style="max-width: 100%; height: 50px;">
+        <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control mb-2 mb-md-0 mr-5" style="max-width: 100%; height: 50px; border: black 1px solid;">
         <div class="d-flex flex-row">
             <button id="filter-button" @click="nextStatusFilter" class="btn-filter mb-4 mr-2" style="width: 130px; height: 50px; text-transform: capitalize;">[[statusFilter]]</button>
             <button id="filter-button" @click="favourites = !favourites" class="material-icons btn-filter mb-4 mr-2" style="height: 50px;" v-bind:style="{ color: favourites ? 'gold' : 'black' }">star</button>        
