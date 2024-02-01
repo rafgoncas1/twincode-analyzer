@@ -25,7 +25,8 @@ const app = {
                 res = res.filter(session => session.status == this.statusFilter);
             }
             if (this.searchTerm != '') {
-                res = res.filter(session => session.name.includes(this.searchTerm));
+                let lowerCaseSearchTerm = this.searchTerm.toLowerCase();
+                res = res.filter(session => session.name.toLowerCase().includes(lowerCaseSearchTerm));
             }
             return res;
         }
