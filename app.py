@@ -5,8 +5,8 @@ import requests
 import json
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
-import random
 import pandas as pd
+import threading
 
 app = Flask(__name__)
 socket = SocketIO(app)
@@ -104,32 +104,18 @@ def api_favourites(session_name):
 @app.route('/api/analysis/<session_name>', methods=['POST'])
 def api_analysis(session_name):
     if isLogged():
-        print('Starting analysis for session ' + session_name + '...')
         session = Session.query.get(session_name)
         if session:
             session.status = 'running'
             session.percentage = 1
             db.session.commit()
             socket.emit('analysisStarted', {'name': session_name})
-            
-            twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name, headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
-            if not twincode_req.ok:
-                return jsonify({'message': twincode_req.content}), twincode_req.status_code
-            
-            twincode_data = twincode_req.json()
-            twincode_df = pd.DataFrame(twincode_data)
-            print(twincode_df)
-            
-            
+            threading.Thread(target=startAnalysis, args=(session_name,)).start()
             return jsonify({'message': 'Analysis started successfully!'}), 202
         else:
             return jsonify({'message': 'Session not found!'}), 404
     else:
         return jsonify({'message': 'Not logged in!'}), 403
-
-
-if __name__ == '__main__':
-    app.run()
 
 ### SocketIO ###
 
@@ -140,3 +126,43 @@ def connect_handler():
         return False
     else:
         print('Client connected!')
+
+### Auxiliar Functions ###
+
+def startAnalysis(session_name):
+    with app.app_context():
+        twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+        print(twincode_req.ok)
+        if not twincode_req.ok:
+            analysisError(session_name, 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text))
+            return
+        
+        twincode_data = None
+        try:
+            twincode_data = twincode_req.json()
+        except:
+            analysisError(session_name, 'Error parsing twincode data for ' + session_name)
+            return
+
+        twincode_df = pd.DataFrame(twincode_data)
+        print(twincode_df)
+        
+        tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/sessions/' + session_name + "/rooms/")
+        if not tagachat_req.ok:
+            analysisError(session_name, 'Error fetching tagachat data for ' + session_name)
+            return
+        
+        tagachat_data = tagachat_req.json()
+        print(tagachat_data)
+
+def analysisError(session_name, message):
+    with app.app_context():
+        session = Session.query.get(session_name)
+        session.status = 'pending'
+        session.percentage = 0
+        db.session.commit()
+        socket.emit('analysisError', {'name': session.name, 'message': message})
+    
+
+if __name__ == '__main__':
+    app.run()

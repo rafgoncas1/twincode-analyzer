@@ -103,7 +103,7 @@ const app = {
                 this.sessions = data;
             })
             .catch(error => {
-                this.errorMessage = error.message;
+                this.notification = {title: "Error", message: error.message, error: true};
             });
         },
 
@@ -156,8 +156,8 @@ const app = {
                 }
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error("Analysis failed for " + session.name);
+                if (response.status != 202) {
+                    throw new Error("Failed to start analysis for " + session.name);
                 }
             })
             .catch((error) => {
@@ -188,6 +188,17 @@ socket.on('analysisStarted', (data) => {
         if (session.name == data.name) {
             session.status = "running";
             session.percentage = 1;
+        }
+    });
+});
+
+socket.on('analysisError', (data) => {
+    mounted.notification = {title: data.name, message: data.message, error: true};
+    // Update status in the sessions list
+    mounted.sessions.forEach(session => {
+        if (session.name == data.name) {
+            session.status = "pending";
+            session.percentage = 0;
         }
     });
 });
