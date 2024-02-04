@@ -6,6 +6,7 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 import random
+import pandas as pd
 
 app = Flask(__name__)
 socket = SocketIO(app)
@@ -71,8 +72,8 @@ def api_sessions():
                 db_session = Session.query.get(session['name'])
                 if db_session:
                     session['favourite'] = db_session.favourite
-                    session['status'] = random.choice(["pending", "completed", "running"])
-                    session['percentage'] = random.randint(0, 100)
+                    session['status'] = db_session.status
+                    session['percentage'] = db_session.percentage
                 else:
                     session['favourite'] = False
                     session['status'] = False
@@ -95,6 +96,32 @@ def api_favourites(session_name):
             db.session.commit()
             socket.emit('favouriteUpdated', {'name': session_name, 'favourite': session.favourite})
             return jsonify({'message': 'Favourite updated successfully!'}), 200
+        else:
+            return jsonify({'message': 'Session not found!'}), 404
+    else:
+        return jsonify({'message': 'Not logged in!'}), 403
+    
+@app.route('/api/analysis/<session_name>', methods=['POST'])
+def api_analysis(session_name):
+    if isLogged():
+        print('Starting analysis for session ' + session_name + '...')
+        session = Session.query.get(session_name)
+        if session:
+            session.status = 'running'
+            session.percentage = 1
+            db.session.commit()
+            socket.emit('analysisStarted', {'name': session_name})
+            
+            twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name, headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+            if not twincode_req.ok:
+                return jsonify({'message': twincode_req.content}), twincode_req.status_code
+            
+            twincode_data = twincode_req.json()
+            twincode_df = pd.DataFrame(twincode_data)
+            print(twincode_df)
+            
+            
+            return jsonify({'message': 'Analysis started successfully!'}), 202
         else:
             return jsonify({'message': 'Session not found!'}), 404
     else:

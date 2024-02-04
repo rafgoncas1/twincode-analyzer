@@ -180,3 +180,14 @@ socket.on('favouriteUpdated', (data) => {
         }
     });
 });
+
+socket.on('analysisStarted', (data) => {
+    mounted.notification = {title: data.name, message: "Analysis started"};
+    // Update status in the sessions list
+    mounted.sessions.forEach(session => {
+        if (session.name == data.name) {
+            session.status = "running";
+            session.percentage = 1;
+        }
+    });
+});
