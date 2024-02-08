@@ -204,3 +204,12 @@ socket.on('analysisError', (data) => {
         }
     });
 });
+
+socket.on('percentageUpdate', (data) => {
+    // Update percentage in the sessions list
+    mounted.sessions.forEach(session => {
+        if (session.name == data.name) {
+            session.percentage = data.percentage;
+        }
+    });
+});

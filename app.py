@@ -140,6 +140,7 @@ def start_analysis(session_name):
         twincode_data = None
         try:
             twincode_data = twincode_req.json()
+            update_percentage(session_name, 3)
         except:
             analysis_error(session_name, 'Error parsing twincode data for ' + session_name)
             return
@@ -152,7 +153,13 @@ def start_analysis(session_name):
             analysis_error(session_name, 'Error fetching tagachat data for ' + session_name)
             return
         
-        tagachat_data = tagachat_req.json()
+        tagachat_data = None
+        try:
+            tagachat_data = tagachat_req.json()
+            update_percentage(session_name, 6)
+        except:
+            analysis_error(session_name, 'Error parsing tagachat data for ' + session_name)
+            return
         print(tagachat_data)
 
 def analysis_error(session_name, message):
@@ -162,6 +169,13 @@ def analysis_error(session_name, message):
         session.percentage = 0
         db.session.commit()
         socket.emit('analysisError', {'name': session.name, 'message': message})
+
+def update_percentage(session_name, percentage):
+    with app.app_context():
+        session = Session.query.get(session_name)
+        session.percentage = percentage
+        db.session.commit()
+        socket.emit('percentageUpdate', {'name': session.name, 'percentage': session.percentage})
     
 
 if __name__ == '__main__':
