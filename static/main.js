@@ -9,6 +9,7 @@ const app = {
             errorMessage: null,
             successMessage: null,
             sessions: [],
+            loaded: false,
             notification: null,
             favourites: false,
             statusFilter: 'all',
@@ -105,6 +106,7 @@ const app = {
             .catch(error => {
                 this.notification = {title: "Error", message: error.message, error: true};
             });
+                this.loaded = true;
         },
 
         addRemoveFavourite(session) {
