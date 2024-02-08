@@ -26,7 +26,7 @@ class Session(db.Model):
 with app.app_context():
     db.create_all()
 
-def isLogged():
+def is_logged():
     if session.get('logged_in'):
         return True
     else:
@@ -34,14 +34,14 @@ def isLogged():
 
 @app.route('/')
 def index():
-    if isLogged():
+    if is_logged():
             return render_template('index.html')
     else:
         return redirect('/login')
     
 @app.route('/login', methods=['GET'])
 def login():
-    if isLogged():
+    if is_logged():
         return redirect('/')
     else:
         return render_template('login.html', navbar=False)
@@ -64,7 +64,7 @@ def api_logout():
 
 @app.route('/api/sessions', methods=['GET'])
 def api_sessions():
-    if isLogged():
+    if is_logged():
         res = requests.get(os.environ.get('TC_API_URL') + '/sessions', headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
         if res.status_code == 200:
             sessions = res.json()
@@ -88,7 +88,7 @@ def api_sessions():
 
 @app.route('/api/favourites/<session_name>', methods=['PUT'])
 def api_favourites(session_name):
-    if isLogged():
+    if is_logged():
         print('Updating favourite for session ' + session_name + '...')
         session = Session.query.get(session_name)
         if session:
@@ -103,14 +103,14 @@ def api_favourites(session_name):
     
 @app.route('/api/analysis/<session_name>', methods=['POST'])
 def api_analysis(session_name):
-    if isLogged():
+    if is_logged():
         session = Session.query.get(session_name)
         if session:
             session.status = 'running'
             session.percentage = 1
             db.session.commit()
             socket.emit('analysisStarted', {'name': session_name})
-            threading.Thread(target=startAnalysis, args=(session_name,)).start()
+            threading.Thread(target=start_analysis, args=(session_name,)).start()
             return jsonify({'message': 'Analysis started successfully!'}), 202
         else:
             return jsonify({'message': 'Session not found!'}), 404
@@ -121,7 +121,7 @@ def api_analysis(session_name):
 
 @socket.on('connect')
 def connect_handler():
-    if not isLogged():
+    if not is_logged():
         print('Connection refused!')
         return False
     else:
@@ -129,19 +129,19 @@ def connect_handler():
 
 ### Auxiliar Functions ###
 
-def startAnalysis(session_name):
+def start_analysis(session_name):
     with app.app_context():
         twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
         print(twincode_req.ok)
         if not twincode_req.ok:
-            analysisError(session_name, 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text))
+            analysis_error(session_name, 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text))
             return
         
         twincode_data = None
         try:
             twincode_data = twincode_req.json()
         except:
-            analysisError(session_name, 'Error parsing twincode data for ' + session_name)
+            analysis_error(session_name, 'Error parsing twincode data for ' + session_name)
             return
 
         twincode_df = pd.DataFrame(twincode_data)
@@ -149,13 +149,13 @@ def startAnalysis(session_name):
         
         tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/sessions/' + session_name + "/rooms/")
         if not tagachat_req.ok:
-            analysisError(session_name, 'Error fetching tagachat data for ' + session_name)
+            analysis_error(session_name, 'Error fetching tagachat data for ' + session_name)
             return
         
         tagachat_data = tagachat_req.json()
         print(tagachat_data)
 
-def analysisError(session_name, message):
+def analysis_error(session_name, message):
     with app.app_context():
         session = Session.query.get(session_name)
         session.status = 'pending'
