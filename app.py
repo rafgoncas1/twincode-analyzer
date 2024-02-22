@@ -132,7 +132,6 @@ def connect_handler():
 def start_analysis(session_name):
     with app.app_context():
         twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
-        print(twincode_req.ok)
         if not twincode_req.ok:
             analysis_error(session_name, 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text))
             return
