@@ -15,10 +15,12 @@ const app = {
             statusFilter: 'all',
             searchTerm: '',
             showModal: false,
-            modalSession: null
+            modalSession: null,
+            form1: null,
+            form2: null
         }
     },
-    
+
     computed: {
         filteredSessions() {
             res = this.sessions;
@@ -171,14 +173,23 @@ const app = {
         closeModal() {
             this.showModal = false;
             this.modalSession = null;
+            this.form1 = null;
+            this.form2 = null;
+        },
+
+        handleFileUpload(event, formName) {
+            this[formName] = event.target.files[0];
+            console.log(this[formName]);
         },
 
         startAnalysis(session) {
+            const formData = new FormData();
+            formData.append('form1', this.form1);
+            formData.append('form2', this.form2);
+
             fetch('/api/analysis/' + session.name, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                body: formData,
             })
             .then(response => {
                 if (response.status != 202) {
@@ -207,9 +218,14 @@ socket.on('favouriteUpdated', (data) => {
 });
 
 socket.on('analysisStarted', (data) => {
-    mounted.notification = {title: data.name, message: "Analysis started"};
+    const { showModal, modalSession, closeModal } = mounted;
+    if (showModal && modalSession.name == data.name) {
+        closeModal();
+    }
+
+    notification = {title: data.name, message: "Analysis started"};
     // Update status in the sessions list
-    mounted.sessions.forEach(session => {
+    sessions.forEach(session => {
         if (session.name == data.name) {
             session.status = "running";
             session.percentage = 1;

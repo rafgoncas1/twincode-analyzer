@@ -7,10 +7,10 @@
         </div>
     </div>
     <div v-if="showModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click="closeModal">
-        <div class="modal-dialog modal-dialog-centered" @click.stop>
+        <div class="modal-dialog modal-dialog-centered modal-lg" @click.stop>
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">Start analysis for <span class="font-weight-bold">[[ modalSession.name ]]</span></h3>
+                    <h3 class="modal-title font-weight-bold">[[ modalSession.name ]]</h3>
                     <button type="button" class="close" aria-label="Close" @click="closeModal">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -19,14 +19,19 @@
                     <div class="alert alert-warning" role="alert" v-if="modalSession.status != 'pending'" >
                         <strong>Warning!</strong> This action will remove the previous analysis of the session.
                     </div>
-                    <p>Before proceeding, we need <b>forms 1 and 2</b> from the [[modalSession.name]] session.</p>
-                    <p><b  class="text-warning">Important!</b> Ensure both forms are in <b>.csv</b> format. Download them as comma-separated values from Google Sheets before uploading.</p>
+                    <p><b  class="text-warning">Important!</b> Before proceeding, we need <b>forms 1 and 2</b> from the [[modalSession.name]] session. Ensure both forms are in <b>.csv</b> format.</p>
                     <br>
-                    <h5>Form 1</h5>
+                    <h5 class="font-weight-bold">Form 1</h5>
                     <p>Make sure the structure of the sheet is similar to <a href="{{ url_for('static', filename='/images/ExampleForm1.png') }}" target="_blank">this</a>.</p>
+                    <input type="file" @change="handleFileUpload($event, 'form1')" class="form-control" accept=".csv" id="formFile1">
                     <br>
-                    <h5>Form 2</h5>
+                    <h5 class="font-weight-bold">Form 2</h5>
                     <p>Make sure the structure of the sheet is <b>similar to the first form plus the compare partner skill and avatar columns</b> shown <a href="{{ url_for('static', filename='/images/ExampleForm2.png') }}" target="_blank">here</a>.</p>
+                    <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
+                    <br>
+                    <div class="modal-footer d-flex justify-content-end">
+                        <button @click="startAnalysis" class="btn btn-success" :disabled="!form1 || !form2">Start Analysis</button>
+                    </div>
                 </div>
             </div>
         </div>
