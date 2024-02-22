@@ -174,6 +174,7 @@ def start_analysis(session_name):
         tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/sessions/' + session_name + "/rooms/")
         if not tagachat_req.ok:
             analysis_error(session_name, 'Error fetching tagachat data for ' + session_name)
+            print(tagachat_req.text)
             return
         
         tagachat_data = None

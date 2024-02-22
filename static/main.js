@@ -223,9 +223,9 @@ socket.on('analysisStarted', (data) => {
         closeModal();
     }
 
-    notification = {title: data.name, message: "Analysis started"};
+    mounted.notification = {title: data.name, message: "Analysis started"};
     // Update status in the sessions list
-    sessions.forEach(session => {
+    mounted.sessions.forEach(session => {
         if (session.name == data.name) {
             session.status = "running";
             session.percentage = 1;
