@@ -14,8 +14,11 @@ const app = {
             favourites: false,
             statusFilter: 'all',
             searchTerm: '',
+            showModal: false,
+            modalSession: null
         }
     },
+    
     computed: {
         filteredSessions() {
             res = this.sessions;
@@ -30,6 +33,16 @@ const app = {
                 res = res.filter(session => session.name.toLowerCase().includes(lowerCaseSearchTerm));
             }
             return res;
+        }
+    },
+
+    watch: {
+        showModal(val) {
+            if (val) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = 'auto';
+            }
         }
     },
 
@@ -148,6 +161,16 @@ const app = {
 
         viewAnalysis(session) {
             window.location.href = '/analysis/' + session.name;
+        },
+
+        openModal(session) {
+            this.modalSession = session;
+            this.showModal = true;
+        },
+
+        closeModal() {
+            this.showModal = false;
+            this.modalSession = null;
         },
 
         startAnalysis(session) {

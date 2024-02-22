@@ -6,6 +6,31 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <div v-if="showModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click="closeModal">
+        <div class="modal-dialog modal-dialog-centered" @click.stop>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Start analysis for <span class="font-weight-bold">[[ modalSession.name ]]</span></h3>
+                    <button type="button" class="close" aria-label="Close" @click="closeModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert" v-if="modalSession.status != 'pending'" >
+                        <strong>Warning!</strong> This action will remove the previous analysis of the session.
+                    </div>
+                    <p>Before proceeding, we need <b>forms 1 and 2</b> from the [[modalSession.name]] session.</p>
+                    <p><b  class="text-warning">Important!</b> Ensure both forms are in <b>.csv</b> format. Download them as comma-separated values from Google Sheets before uploading.</p>
+                    <br>
+                    <h5>Form 1</h5>
+                    <p>Make sure the structure of the sheet is similar to <a href="{{ url_for('static', filename='/images/ExampleForm1.png') }}" target="_blank">this</a>.</p>
+                    <br>
+                    <h5>Form 2</h5>
+                    <p>Make sure the structure of the sheet is <b>similar to the first form plus the compare partner skill and avatar columns</b> shown <a href="{{ url_for('static', filename='/images/ExampleForm2.png') }}" target="_blank">here</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4" v-if="loaded && sessions.length > 0">
         <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control mb-2 mb-md-0 mr-5" style="max-width: 100%; height: 50px; border: black 1px solid;">
         <div class="d-flex flex-row">
@@ -28,7 +53,7 @@
                 <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
             </div>
             <div class="mt-5">
-                <h3 class="heading">[[session.name]]</h3>
+                <h3 class="heading font-weight-bold">[[session.name]]</h3>
                 <div class="mt-5" v-if="session.status=='running'">
                     <div class="progress" style="height: 20px;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: session.percentage + '%' }" :aria-valuenow="session.percentage" aria-valuemin="0" aria-valuemax="100"></div>
@@ -39,16 +64,17 @@
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
                             <button @click="viewAnalysis(session)" class="btn btn-success mr-2" style="height: 40px;">View</button>
-                            <button @click="startAnalysis(session)" class="btn btn-danger" style="height: 40px;">Restart</button>
+                            <button @click="openModal(session)" class="btn btn-danger" style="height: 40px;">Restart</button>
                         </div>
                     </div>
                 </div>
                 <div class="mt-5" v-else>
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
-                            <button @click="startAnalysis(session)" class="btn btn-primary" style="height: 40px;">Start</button>
+                            <button @click="openModal(session)" class="btn btn-primary" style="height: 40px;">Start</button>
                         </div>
                     </div>
+                </div>
             </div>
         </div>
     </div>
