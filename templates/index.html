@@ -30,7 +30,7 @@
                     <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
                     <br>
                     <div class="modal-footer d-flex justify-content-end">
-                        <button @click="startAnalysis" class="btn btn-success" :disabled="!form1 || !form2">Start Analysis</button>
+                        <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2">Start Analysis</button>
                     </div>
                 </div>
             </div>

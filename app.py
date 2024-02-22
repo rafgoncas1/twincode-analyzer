@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 import pandas as pd
 import threading
+from io import BytesIO
 
 app = Flask(__name__)
 socket = SocketIO(app)
@@ -105,15 +106,38 @@ def api_favourites(session_name):
 def api_analysis(session_name):
     if is_logged():
         session = Session.query.get(session_name)
-        if session:
-            session.status = 'running'
-            session.percentage = 1
-            db.session.commit()
-            socket.emit('analysisStarted', {'name': session_name})
-            threading.Thread(target=start_analysis, args=(session_name,)).start()
-            return jsonify({'message': 'Analysis started successfully!'}), 202
-        else:
+        if not session:
             return jsonify({'message': 'Session not found!'}), 404
+        form1 = request.files.get('form1')
+        if not form1:
+            return jsonify({'message': 'Form1 not found!'}), 400
+        form2 = request.files.get('form2')
+        if not form2:
+            return jsonify({'message': 'Form2 not found!'}), 400
+        
+        form1_df = None
+        try:
+            form1_data = BytesIO(form1.read())
+            form1_df = pd.read_csv(form1_data)
+        except:
+            return jsonify({'message': 'Error parsing form1 data!'}), 400
+
+        form2_df = None
+        try:
+            form2_data = BytesIO(form2.read())
+            form2_df = pd.read_csv(form2_data)
+        except:
+            return jsonify({'message': 'Error parsing form2 data!'}), 400
+
+        print(form1_df)
+        print(form2_df)
+
+        session.status = 'running'
+        session.percentage = 1
+        db.session.commit()
+        socket.emit('analysisStarted', {'name': session_name})
+        threading.Thread(target=start_analysis, args=(session_name,)).start()
+        return jsonify({'message': 'Analysis started successfully!'}), 202
     else:
         return jsonify({'message': 'Not logged in!'}), 403
 
