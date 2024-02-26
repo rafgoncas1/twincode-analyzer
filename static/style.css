@@ -74,8 +74,7 @@ body {
     bottom: 45px;
     right: 20px;
     border-radius: 50%;
-    box-shadow: 0 0 3px red;
-    border: 2px solid rgb(221, 0, 0);
+    box-shadow: 0 0 4px rgba(120, 57, 57, 0.606);
     opacity: 0;
     visibility: hidden;
 }
