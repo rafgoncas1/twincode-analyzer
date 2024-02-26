@@ -171,7 +171,7 @@ def start_analysis(session_name):
         twincode_df = pd.DataFrame(twincode_data)
         print(twincode_df)
         
-        tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/sessions/' + session_name + "/rooms/")
+        tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/analytics/' + session_name)
         if not tagachat_req.ok:
             analysis_error(session_name, 'Error fetching tagachat data for ' + session_name)
             print(tagachat_req.text)

@@ -17,7 +17,8 @@ const app = {
             showModal: false,
             modalSession: null,
             form1: null,
-            form2: null
+            form2: null,
+            showScrollTop: false,
         }
     },
 
@@ -52,9 +53,19 @@ const app = {
         if (window.location.pathname == '/') {
             this.fetchSessions();
         }
+        window.addEventListener('scroll', this.checkScroll);
     },
 
     methods: {
+
+        checkScroll() {
+            this.showScrollTop = window.scrollY > 500;
+        },
+
+        scrollTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
         login() {
             fetch('/api/login', {
                 method: 'POST',
@@ -201,6 +212,11 @@ const app = {
             });
         }
     },
+
+    
+    beforeDestroy() {
+        window.removeEventListener('scroll', this.checkScroll);
+    }
 };
 
 const mounted = createApp(app).mount('#app')
