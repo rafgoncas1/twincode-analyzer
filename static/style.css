@@ -2,6 +2,8 @@ body {
     margin: 0;
     padding: 0;
     background-color: rgb(251, 249, 241);
+    overflow-y: scroll;
+    scrollbar-width: none;
 }
 
 #app {
@@ -33,7 +35,7 @@ body {
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat( auto-fit, minmax(300px, 1fr) );;
+    grid-template-columns: repeat( auto-fill, minmax(300px, 1fr) );
     gap: 25px;
 }
 

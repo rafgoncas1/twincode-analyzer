@@ -6,11 +6,6 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
-    <button :class="{ show: showScrollTop }" @click="scrollTop" type="button" class="btn btn-danger" id="btn-back-to-top">
-        <span class="material-icons">
-            arrow_upward
-        </span>
-    </button>
     <div v-if="showModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click="closeModal">
         <div class="modal-dialog modal-dialog-centered modal-lg" @click.stop>
             <div class="modal-content">
