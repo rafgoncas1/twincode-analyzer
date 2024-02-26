@@ -54,7 +54,7 @@ body {
 }
 
 .navbar-analyzer {
-    background: linear-gradient(90deg, rgba(197,220,245,1) 0%, rgba(255,255,255,0) 50%, rgba(197,220,245,1) 100%);
+    background: rgba(197,220,245,1);
 }
 
 .filters {
