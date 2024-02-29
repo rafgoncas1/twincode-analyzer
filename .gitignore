@@ -6,3 +6,6 @@ instance/
 *.db
 # pycache
 __pycache__/
+
+# Analysis files
+analysis/**
