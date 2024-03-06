@@ -48,7 +48,7 @@
         <hr>
     </div>
     <div class="grid-container">
-        <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2" style="height: 260px;">
+        <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2 shadow" style="height: 260px;">
             <div class="d-flex justify-content-between">
                 <div class="d-flex flex-row align-items-center">
                     <button @click="addRemoveFavourite(session)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: session.favourite ? 'gold' : 'black' }">star</button>
