@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, redirect, request, jsonify
+from flask import Flask, render_template, session, redirect, request, jsonify, send_from_directory
 import os
 from flask_socketio import SocketIO
 import requests
@@ -47,6 +47,32 @@ def login():
     else:
         return render_template('login.html', navbar=False)
 
+@app.route('/analysis/<session_name>', methods=['GET'])
+def analysis(session_name):
+    if is_logged():
+        # Check if session exists and is completed
+        session = Session.query.get(session_name)
+        if not session or session.status != 'completed':
+            return page_not_found()
+
+        #  Load json data from analysis results
+        with open('analysis/' + session_name + '/analysis.json') as json_file:
+            data = json.load(json_file)
+
+        data['session'] = session_name
+
+        return render_template('analysis.html', data=data)
+    else:
+        return redirect('/login')
+
+@app.route('/analysis/<session_name>/plots/<path:filename>')
+def serve_plots(session_name, filename):
+    return send_from_directory(f'analysis/{session_name}/plots', filename)
+    
+@app.errorhandler(404)
+def page_not_found(e=None):
+    return render_template('404.html', navbar=False), 404
+
 ### API Routes ###
 
 @app.route('/api/login', methods=['POST'])
@@ -77,9 +103,9 @@ def api_sessions():
                     session['percentage'] = db_session.percentage
                 else:
                     session['favourite'] = False
-                    session['status'] = False
-                    session['percentage'] = 0
-                    db.session.add(Session(name=session['name']))
+                    session['status'] = 'completed' if session['name'] == 'ucb1' else 'pending'
+                    session['percentage'] = 100 if session['name'] == 'ucb1' else 0
+                    db.session.add(Session(name=session['name'], favourite=session['favourite'], status=session['status'], percentage=session['percentage']))
             db.session.commit()
             return jsonify(sessions), 200
         else:
