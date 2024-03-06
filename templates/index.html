@@ -22,11 +22,11 @@
                     <p><b  class="text-warning">Important!</b> Upload <b>forms 1 and 2</b> from the [[modalSession.name]] session. Ensure both forms are in <b>.csv</b> format.</p>
                     <br>
                     <h5 class="font-weight-bold">Form 1</h5>
-                    <p>Make sure the structure of the sheet is similar to <a href="{{ url_for('static', filename='/images/ExampleForm1.png') }}" target="_blank">this</a>.</p>
+                    <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_1.csv') }}" target="_blank">this</a>.</p>
                     <input type="file" @change="handleFileUpload($event, 'form1')" class="form-control" accept=".csv" id="formFile1">
                     <br>
                     <h5 class="font-weight-bold">Form 2</h5>
-                    <p>Make sure the structure of the sheet is <b>similar to the first form plus the compare partner skill and avatar columns</b> shown <a href="{{ url_for('static', filename='/images/ExampleForm2.png') }}" target="_blank">here</a>.</p>
+                    <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_2.csv') }}" target="_blank">this</a>.</p>
                     <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
                     <br>
                     <div class="modal-footer d-flex justify-content-end">
