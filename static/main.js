@@ -9,7 +9,7 @@ const app = {
             errorMessage: null,
             successMessage: null,
             sessions: [],
-            loaded: false,
+            isLoading: true,
             notification: null,
             favourites: false,
             statusFilter: 'all',
@@ -128,11 +128,12 @@ const app = {
             })
             .then(data => {
                 this.sessions = data;
+                this.isLoading = false;
             })
             .catch(error => {
                 this.notification = {title: "Error", message: error.message, error: true};
+                this.isLoading = false;
             });
-                this.loaded = true;
         },
 
         addRemoveFavourite(session) {
