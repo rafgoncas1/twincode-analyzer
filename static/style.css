@@ -169,3 +169,15 @@ footer p {
 .trash:hover {
     color: #f44336;
 }
+
+@media print {
+    
+    .btn, .navbar-analyzer, footer {
+        display: none !important;
+    }
+    
+    #sheet {
+        box-shadow: none !important;
+    }
+
+}

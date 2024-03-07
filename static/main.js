@@ -211,6 +211,10 @@ const app = {
             .catch((error) => {
                 this.notification = {title: session.name, message: error.message, error: true};
             });
+        },
+
+        printPage() {
+            window.print();
         }
     },
 
