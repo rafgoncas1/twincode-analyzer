@@ -2,39 +2,43 @@
 
 {% block content %}
 
-<div class="bg-white p-5 rounded shadow">
+<div class="bg-white p-5 rounded shadow" id="sheet">
 
-<h1 class="display-3">Analysis for {{ data.session }}</h1>
-<hr/>
+    <h1 class="display-3">Analysis for {{ data.session }}</h1>
+    <hr />
 
-<!-- Index -->
+    <!-- Index -->
 
-<h1 class="mt-5">Index</h1>
-<ul>
-    <li><a href="#1.1">1.1 Variable analysis: Control vs Experimental</a></li>
-    <li><a href="#1.2">1.2 CPS analysis: Control vs Experimental</a></li>
-    <li><a href="#2.1">2.1 Variable analysis: ppgender in experimental group</a></li>
-    <li><a href="#2.2">2.2 CPS analysis: CPS in experimental group</a></li>
-</ul>
+    <h1 class="mt-5">Index</h1>
+    <ul>
+        <li><a href="#1.1">1.1 Variable analysis: Control vs Experimental</a></li>
+        <li><a href="#1.2">1.2 CPS analysis: Control vs Experimental</a></li>
+        <li><a href="#2.1">2.1 Variable analysis: ppgender in experimental group</a></li>
+        <li><a href="#2.2">2.2 CPS analysis: CPS in experimental group</a></li>
+    </ul>
 
-<!-- 1.1 Variable analysis: Control vs Experimental -->
+    <!-- 1.1 Variable analysis: Control vs Experimental -->
 
-<h1 id="1.1" class="mt-5">1.1 Variable analysis: Control vs Experimental</h1>
-<hr/>
-<p class="lead pl-2 pr-5 mt-4" style="text-align: justify; text-justify: inter-word;">
-    For each variable, we compute the distance between the two in-pair tasks as the absolute value of the difference, i.e. |v(t2)
-    - v(t1)|. Ideally, this distance should be lower for the students in the control group (no information about partners’ genders)
-    than for those in the experimental group (with two different perceived partners’ genders at t1 and t2). Therefore, for every
-    variable, we perform an unpaired one-tailed t-test and a one-tailed Mann-Whitney U test (also known
-    as unpaired two-samples Wilcoxon test or Wilcoxon rank sum test), to detect whether control group distance is lower than
-    experimental group distance.
-</p>
+    <h1 id="1.1" class="mt-5">1.1 Variable analysis: Control vs Experimental</h1>
+    <hr />
+    <p class="lead pl-2 pr-5 mt-4" style="text-align: justify; text-justify: inter-word;">
+        For each variable, we compute the distance between the two in-pair tasks as the absolute value of the
+        difference, i.e. |v(t2)
+        - v(t1)|. Ideally, this distance should be lower for the students in the control group (no information about
+        partners’ genders)
+        than for those in the experimental group (with two different perceived partners’ genders at t1 and t2).
+        Therefore, for every
+        variable, we perform an unpaired one-tailed t-test and a one-tailed Mann-Whitney U test (also known
+        as unpaired two-samples Wilcoxon test or Wilcoxon rank sum test), to detect whether control group distance is
+        lower than
+        experimental group distance.
+    </p>
 
-<!-- For each variable -->
+    <!-- For each variable -->
 
-{% for variable, values in data.between.items() %}
+    {% for variable, values in data.between.items() %}
     <h2 class="mt-5">{{variable}}</h2>
-    <hr/>
+    <hr />
 
     <!-- Shapiro Wilk -->
 
@@ -51,7 +55,8 @@
             <tbody>
                 <tr>
                     <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
-                    <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05 else 'Not significantly different from normal distribution'}}</td>
+                    <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05
+                            else 'Not significantly different from normal distribution' }}</td>
                 </tr>
             </tbody>
         </table>
@@ -68,7 +73,8 @@
             <tbody>
                 <tr>
                     <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
-                    <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05 else 'Not significantly different from normal distribution'}}</td>
+                    <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05
+                            else 'Not significantly different from normal distribution' }}</td>
                 </tr>
             </tbody>
         </table>
@@ -88,7 +94,8 @@
             <tbody>
                 <tr>
                     <td>{{"{:.6f}".format(values.ttest_p)}}</td>
-                    <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05 else 'Mean difference is not statistically significant'}}</td>
+                    <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                            else 'Mean difference is not statistically significant' }}</td>
                 </tr>
             </tbody>
         </table>
@@ -108,7 +115,8 @@
             <tbody>
                 <tr>
                     <td>{{"{:.6f}".format(values.cohens_d)}}</td>
-                    <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if values.cohens_d < 0.2 else 'Medium effect size' if values.cohens_d < 0.5 else 'Large effect size'}}</td>
+                    <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if values.cohens_d
+                            < 0.2 else 'Medium effect size' if values.cohens_d < 0.5 else 'Large effect size' }}</td>
                 </tr>
             </tbody>
         </table>
@@ -117,178 +125,525 @@
     <!-- Mann-Whittney U -->
 
     <h3 class="mt-4">Non-parametric one-tailed (ctrl < exp) unpaired Mann-Whitney U test</h3>
-    <div class="card shadow">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">p-value</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.mwu_p)}}</td>
-                    <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05 else 'Mean difference is not statistically significant'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.mwu_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- Wilcoxon's effect size -->
+            <!-- Wilcoxon's effect size -->
 
-    <h3 class="mt-4">Wilcoxon's effect size</h3>
-    <div class="card shadow">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">effect size</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.mwu_r)}}</td>
-                    <td>{{ 'Negligible effect size' if values.mwu_r < 0.1 else 'Small effect size' if values.mwu_r < 0.3 else 'Medium effect size' if values.mwu_r < 0.5 else 'Large effect size'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <h3 class="mt-4">Wilcoxon's effect size</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">effect size</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.mwu_r)}}</td>
+                            <td>{{ 'Negligible effect size' if values.mwu_r < 0.1 else 'Small effect size' if
+                                    values.mwu_r < 0.3 else 'Medium effect size' if values.mwu_r < 0.5
+                                    else 'Large effect size' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- Plot -->
-    <h3 class="mt-4">KDE plot and Boxplot</h3>
-    <img class="mt-3 rounded mx-auto d-block img-thumbnail shadow" src="{{values.plot}}" alt="{{variable}}" class="img-fluid" loading="lazy">
+            <!-- Plot -->
+            <h3 class="mt-4">KDE plot and Boxplot</h3>
+            <img class="mt-3 rounded mx-auto d-block img-thumbnail shadow" src="{{values.plot}}" alt="{{variable}}"
+                class="img-fluid" loading="lazy">
 
-{% endfor %}
+            {% endfor %}
 
-<!-- 1.2 CPS analysis: Control vs Experimental -->
+            <!-- 1.2 CPS analysis: Control vs Experimental -->
 
-<h1 class="mt-5" id="1.2">1.2 CPS analysis: Control vs Experimental</h1>
-<hr/>
+            <h1 class="mt-5" id="1.2">1.2 CPS analysis: Control vs Experimental</h1>
+            <hr />
 
-<p class="lead pl-2 pr-5 mt-4" style="text-align: justify; text-justify: inter-word;">
-    For each cps variable, we check whether means are different between groups. Ideally, 
-    control group mean should be close to 5 (middle point between first and second partner), 
-    and experimental group mean should be somehow skewed towards 0 (man partner) or 10 (woman partner). 
-    Therefore, for every cps variable, we perform an unpaired two-tailed t–test, a one-way ANOVA, 
-    and a two-tailed Mann-Whitney U test (also known as unpaired two-samples Wilcoxon test or Wilcoxon rank sum test), 
-    to detect differences between groups.
-</p>
+            <p class="lead pl-2 pr-5 mt-4" style="text-align: justify; text-justify: inter-word;">
+                For each cps variable, we check whether means are different between groups. Ideally,
+                control group mean should be close to 5 (middle point between first and second partner),
+                and experimental group mean should be somehow skewed towards 0 (man partner) or 10 (woman partner).
+                Therefore, for every cps variable, we perform an unpaired two-tailed t–test, a one-way ANOVA,
+                and a two-tailed Mann-Whitney U test (also known as unpaired two-samples Wilcoxon test or Wilcoxon rank
+                sum test),
+                to detect differences between groups.
+            </p>
 
-<!-- For each variable -->
+            <!-- For each variable -->
 
-{% for variable, values in data.cps_between.items() %}
-    <h2 class="mt-5">{{variable}}</h2>
-    <hr/>
+            {% for variable, values in data.cps_between.items() %}
+            <h2 class="mt-5">{{variable}}</h2>
+            <hr />
 
-    <!-- Shapiro Wilk -->
+            <!-- Shapiro Wilk -->
 
-    <h3 class="mt-4">Shapiro-Wilk's tests</h3>
-    <div class="card mt-3 shadow">
-        <h4 class="p-2">Control group</h4>
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">p-value</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
-                    <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05 else 'Not significantly different from normal distribution'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="card mt-3 shadow">
-        <h4 class="p-2">Experimental group</h4>
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">p-value</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
-                    <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05 else 'Not significantly different from normal distribution'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <h3 class="mt-4">Shapiro-Wilk's tests</h3>
+            <div class="card mt-3 shadow">
+                <h4 class="p-2">Control group</h4>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card mt-3 shadow">
+                <h4 class="p-2">Experimental group</h4>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- T-test -->
+            <!-- T-test -->
 
-    <h3 class="mt-4">Parametric unpaired t-test</h3>
-    <div class="card shadow">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">p-value</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.ttest_p)}}</td>
-                    <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05 else 'Mean difference is not statistically significant'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <h3 class="mt-4">Parametric unpaired t-test</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- Parametric one-way ANOVA -->
+            <!-- Parametric one-way ANOVA -->
 
-    <h3 class="mt-4">Parametric one-way ANOVA</h3>
-    <div class="card shadow">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">p-value</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.anova_p)}}</td>
-                    <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05 else 'Mean difference is not statistically significant'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <h3 class="mt-4">Parametric one-way ANOVA</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.anova_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- Mann-Whittney U -->
+            <!-- Mann-Whittney U -->
 
-    <h3 class="mt-4">Non-parametric two-tailed unpaired Mann-Whitney U test</h3>
-    <div class="card shadow">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th class="col-3">p-value</th>
-                    <th class="col">interpretation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{"{:.6f}".format(values.mwu_p)}}</td>
-                    <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05 else 'Mean difference is not statistically significant'}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            <h3 class="mt-4">Non-parametric two-tailed unpaired Mann-Whitney U test</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.mwu_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- Plot -->
-    <h3 class="mt-4">KDE plot and Boxplot</h3>
-    <img class="mt-3 rounded mx-auto d-block img-thumbnail shadow" src="{{values.plot}}" alt="{{variable}}" class="img-fluid" loading="lazy">
+            <!-- Plot -->
+            <h3 class="mt-4">KDE plot and Boxplot</h3>
+            <img class="mt-3 rounded mx-auto d-block img-thumbnail shadow" src="{{values.plot}}" alt="{{variable}}"
+                class="img-fluid" loading="lazy">
 
-{% endfor %}
+            {% endfor %}
 
-<h1 id="2.1">2.1 Variable analysis: ppgender in experimental group</h1>
-<hr/>
+            <!-- 2.1 Variable analysis: ppgender in experimental group -->
 
-<h1 id="2.2">2.2 CPS analysis: CPS in experimental group</h1>
-<hr/>
+            <h1 class="mt-5" id="2.1">2.1 Variable analysis: ppgender in experimental group</h1>
+            <hr />
+
+            <p class="lead pl-2 pr-5 mt-4" style="text-align: justify; text-justify: inter-word;">
+                Does the score of each variable depend on the perceived gender?
+                In the experimental group only, for each variable, we perform a paired two-sided t-test,
+                a one-way repeated measures ANOVA, and a two-sided paired Wilcoxon test to detect whether there is a
+                difference using ppgender as a within variable.
+                We also check whether there is an interaction between ppgender and gender using a two-way mixed-model
+                ANOVA.
+            </p>
+
+            <!-- For each variable -->
+
+            {% for variable, values in data.within.ppgender.items() %}
+            <h2 class="mt-5">{{variable}}</h2>
+            <hr />
+
+            <!-- Shapiro Wilk -->
+
+            <h3 class="mt-4">Shapiro-Wilk's tests for difference of pairs</h3>
+            <div class="card mt-3 shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.sw_p)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- T-test -->
+
+            <h3 class="mt-4">Parametric two-sided paired t-test ~ ppgender</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Cohen's d effect size -->
+
+            <h3 class="mt-4">Cohen's d effect size</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">effect size</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.cohens_d)}}</td>
+                            <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if
+                                    values.cohens_d < 0.2 else 'Medium effect size' if values.cohens_d < 0.5
+                                    else 'Large effect size' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Parametric one-way repeated measures ANOVA -->
+
+            <h3 class="mt-4">Parametric one-way repeated measures ANOVA ~ ppgender</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.anova_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Non parametric two-sided paired Wilcoxon test -->
+
+            <h3 class="mt-4">Non-parametric two-sided paired Wilcoxon test ~ ppgender distance</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.wilcoxon_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.wilcoxon_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Wilcoxon's effect size -->
+
+            <h3 class="mt-4">Wilcoxon's effect size</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">effect size</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.wilcoxon_r)}}</td>
+                            <td>{{ 'Negligible effect size' if values.wilcoxon_r < 0.1 else 'Small effect size' if
+                                    values.wilcoxon_r < 0.3 else 'Medium effect size' if values.wilcoxon_r < 0.5
+                                    else 'Large effect size' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Two-way mixed-model ANOVA -->
+
+            <h3 class="mt-4">Two-way mixed-model ANOVA ~ gender and ppgender</h3>
+            <div class="card shadow">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>DF1</th>
+                            <th>DF2</th>
+                            <th>SS</th>
+                            <th>MS</th>
+                            <th>F</th>
+                            <th>eps</th>
+                            <th>np2</th>
+                            <th>p-unc</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ values['aov']['Source']['0'] }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['DF1']['0']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['DF2']['0']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['SS']['0']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['MS']['0']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['F']['0']) }}</td>
+                            <td>{{ values['aov']['eps']['0'] }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['np2']['0']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['p-unc']['0']) }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ values['aov']['Source']['1'] }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['DF1']['1']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['DF2']['1']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['SS']['1']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['MS']['1']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['F']['1']) }}</td>
+                            <td>{{ values['aov']['eps']['1'] }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['np2']['1']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['p-unc']['1']) }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ values['aov']['Source']['2'] }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['DF1']['2']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['DF2']['2']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['SS']['2']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['MS']['2']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['F']['2']) }}</td>
+                            <td>{{ values['aov']['eps']['2'] }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['np2']['2']) }}</td>
+                            <td>{{ "{:.4f}".format(values['aov']['p-unc']['2']) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Plot -->
+
+            <h3 class="mt-4">KDE plot and Boxplot</h3>
+            <img class="mt-3 rounded mx-auto d-block img-thumbnail shadow" src="{{values.plot}}" alt="{{variable}}"
+                class="img-fluid" loading="lazy">
+
+            {% endfor %}
+
+            <!-- 2.2 CPS analysis: CPS in experimental group -->
+
+            <h1 class="mt-5" id="2.2">2.2 CPS analysis: CPS in experimental group</h1>
+            <hr />
+
+            <p class="lead pl-2 pr-5 mt-4" style="text-align: justify; text-justify: inter-word;">
+                Does the score of each cps variable depend on the subject’s gender?
+                In the experimental group only, for each cps variable, we perform an unpaired t-test,
+                a one-way ANOVA, and an unpaired Wilcoxon test to detect whether there is a difference using gender as a
+                between variable.
+            </p>
+
+            <!-- For each variable -->
+
+            {% for variable, values in data.cps_within.items() %}
+            <h2 class="mt-5">{{variable}}</h2>
+            <hr />
+
+            <!-- Shapiro Wilk -->
+
+            <h3 class="mt-4">Shapiro-Wilk's tests for difference of pairs</h3>
+            <div class="card mt-3 shadow">
+                <h4 class="p-2">Men subjects</h4>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.sw_p_men)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_men < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card mt-3 shadow">
+                <h4 class="p-2">Women subjects</h4>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.sw_p_women)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_women < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- T-test -->
+
+            <h3 class="mt-4">Parametric unpaired t-test</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Parametric one-way ANOVA -->
+
+            <h3 class="mt-4">Parametric one-way ANOVA ~ gender</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.anova_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Non parametric unpaired Mann-Whitney U test -->
+
+            <h3 class="mt-4">Non-parametric unpaired Mann-Whitney U test</h3>
+            <div class="card shadow">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-3">p-value</th>
+                            <th class="col">interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{"{:.6f}".format(values.mwu_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Plot -->
+
+            <h3 class="mt-4">KDE plot and Boxplot</h3>
+            <img class="mt-3 rounded mx-auto d-block img-thumbnail shadow" src="{{values.plot}}" alt="{{variable}}"
+                class="img-fluid" loading="lazy">
+
+            {% endfor %}
 
 </div>
+
 {% endblock %}

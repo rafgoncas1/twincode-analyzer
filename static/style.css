@@ -20,6 +20,10 @@ body {
     justify-content: center;
 }
 
+#sheet * {
+    page-break-inside: avoid;
+}
+
 .card-login {
     display: flex;
     flex-direction: column;
