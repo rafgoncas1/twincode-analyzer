@@ -176,7 +176,12 @@ footer p {
         display: none !important;
     }
     
+    #mobile-sheet {
+        display: none !important;
+    }
+
     #sheet {
+        display: block !important;
         box-shadow: none !important;
     }
 
