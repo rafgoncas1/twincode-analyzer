@@ -154,15 +154,27 @@ def api_analysis(session_name):
             form2_df = pd.read_csv(form2_data)
         except:
             return jsonify({'message': 'Error parsing form2 data!'}), 400
-
-        print(form1_df)
-        print(form2_df)
+        
+        if session_name == 'ucb1':
+            # Load df from xlsx file
+            twincode_df = pd.read_excel('ucb1_twincode.xlsx')
+        else:
+            twincode_df = get_tc_data(session_name)
+            if 'error' in twincode_df:
+                return jsonify(twincode_df['error']), 500
+        
+        if session_name == 'ucb1':
+            # Load df from xlsx file
+            tagachat_df = pd.read_excel('ucb1_tagachat.xlsx')
+        else:  
+            tagachat_df = get_tagachat_data(session_name)
+            if 'error' in tagachat_df:
+                return jsonify(tagachat_df['error']), 500
 
         session.status = 'running'
         session.percentage = 1
         db.session.commit()
-        socket.emit('analysisStarted', {'name': session_name})
-        threading.Thread(target=start_analysis, args=(session_name,)).start()
+        threading.Thread(target=start_analysis, args=(session_name,form1_df,form2_df,twincode_df,tagachat_df,)).start()
         return jsonify({'message': 'Analysis started successfully!'}), 202
     else:
         return jsonify({'message': 'Not logged in!'}), 403
@@ -179,38 +191,38 @@ def connect_handler():
 
 ### Auxiliar Functions ###
 
-def start_analysis(session_name):
-    with app.app_context():
-        twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
-        if not twincode_req.ok:
-            analysis_error(session_name, 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text))
-            return
-        
-        twincode_data = None
-        try:
-            twincode_data = twincode_req.json()
-            update_percentage(session_name, 3)
-        except:
-            analysis_error(session_name, 'Error parsing twincode data for ' + session_name)
-            return
+def get_tc_data(session_name):
+    twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+    if not twincode_req.ok:
+        return {'error': 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text)}
+    
+    twincode_data = None
+    try:
+        twincode_data = twincode_req.json()
+    except:
+        return {'error': 'Error parsing twincode data for ' + session_name}
+    
+    df = pd.DataFrame(twincode_data)
+    return df
 
-        twincode_df = pd.DataFrame(twincode_data)
-        print(twincode_df)
+def get_tagachat_data(session_name):
+    tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/analytics/' + session_name)
+    if not tagachat_req.ok:
+        return {'error': 'Error fetching tagachat data for ' + session_name + ' - ' + str(tagachat_req.text)}
+    
+    tagachat_data = None
+    try:
+        tagachat_data = tagachat_req.json()
+    except:
+        return {'error': 'Error parsing tagachat data for ' + session_name}
+    
+    df = pd.DataFrame(tagachat_data)
+    return df
+
+def start_analysis(session_name, form1_df, form2_df, tagachat_df, twincode_df):
+    with app.app_context():
+        socket.emit('analysisStarted', {'name': session_name})
         
-        tagachat_req = requests.get(os.environ.get('TAGACHAT_API_URL') + '/analytics/' + session_name)
-        if not tagachat_req.ok:
-            analysis_error(session_name, 'Error fetching tagachat data for ' + session_name)
-            print(tagachat_req.text)
-            return
-        
-        tagachat_data = None
-        try:
-            tagachat_data = tagachat_req.json()
-            update_percentage(session_name, 6)
-        except:
-            analysis_error(session_name, 'Error parsing tagachat data for ' + session_name)
-            return
-        print(tagachat_data)
 
 def analysis_error(session_name, message):
     with app.app_context():

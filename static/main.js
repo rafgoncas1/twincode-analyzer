@@ -19,6 +19,7 @@ const app = {
             form1: null,
             form2: null,
             showScrollTop: false,
+            collectingData: false
         }
     },
 
@@ -195,6 +196,15 @@ const app = {
         },
 
         startAnalysis(session) {
+
+            if (!this.form1 || !this.form2) {
+                this.notification = {title: session.name, message: "Please select both files", error: true};
+                return;
+            }
+
+            this.showModal = false;
+            this.collectingData = true;
+
             const formData = new FormData();
             formData.append('form1', this.form1);
             formData.append('form2', this.form2);
@@ -204,9 +214,20 @@ const app = {
                 body: formData,
             })
             .then(response => {
+
                 if (response.status != 202) {
-                    throw new Error("Failed to start analysis for " + session.name);
+                    this.collectingData = false;
+                    this.form1 = null;
+                    this.form2 = null;
+                    this.showModal = true;
+                    return response.json().then(data => {
+                        throw new Error(data);
+                    });
                 }
+                this.collectingData = false;
+                this.form1 = null;
+                this.form2 = null;
+                this.modalSession = null;
             })
             .catch((error) => {
                 this.notification = {title: session.name, message: error.message, error: true};
