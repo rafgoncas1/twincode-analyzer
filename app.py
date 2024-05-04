@@ -158,11 +158,20 @@ def api_analysis(session_name):
         except:
             return jsonify({'message': 'Error parsing form2 data!'}), 400
 
+        twincode_df = get_tc_data(session_name)
+        if 'error' in twincode_df:
+            return jsonify(twincode_df['error']), 500
+
+        tagachat_df = get_tagachat_data(session_name, reviewers)
+        if 'error' in tagachat_df:
+            return jsonify(tagachat_df['error']), 500
+
         session.status = 'running'
         session.percentage = 1
         db.session.commit()
+        
         socket.emit('analysisStarted', {'name': session_name})
-        threading.Thread(target=start_analysis, args=(session_name, reviewers,)).start()
+        threading.Thread(target=start_analysis, args=(session_name,form1_df,form2_df,twincode_df,tagachat_df,)).start()
         return jsonify({'message': 'Analysis started successfully!'}), 202
     else:
         return jsonify({'message': 'Not logged in!'}), 403
@@ -178,63 +187,60 @@ def connect_handler():
         print('Client connected!')
 
 ### Auxiliar Functions ###
-
-def start_analysis(session_name, reviewers):
-    with app.app_context():
-        twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
-        if not twincode_req.ok:
-            analysis_error(session_name, 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text))
-            return
-        
-        twincode_data = None
-        try:
-            twincode_data = twincode_req.json()
-            update_percentage(session_name, 3)
-        except:
-            analysis_error(session_name, 'Error parsing twincode data for ' + session_name)
-            return
-
-        twincode_df = pd.DataFrame(twincode_data)
-        
-        tagachat_url = os.environ.get('TAGACHAT_API_URL') + '/analytics/' + session_name
-
-        if reviewers:
-            string_reviewers = ','.join(reviewers)
-            reviewers_query = '?reviewers=' + string_reviewers
-            tagachat_url += reviewers_query
-        
-        print(tagachat_url)
-
-        tagachat_req = requests.get(tagachat_url)
-        if not tagachat_req.ok:
-            analysis_error(session_name, 'Error fetching tagachat data for ' + session_name)
-            return
-        
-        tagachat_data = None
-        try:
-            tagachat_data = tagachat_req.json()
-            update_percentage(session_name, 6)
-        except:
-            analysis_error(session_name, 'Error parsing tagachat data for ' + session_name)
-            return
-        
-        tagachat_df = pd.DataFrame(tagachat_data)
-        # Eliminar columna session, room, reviewer y renombrar columna participant por id
-        tagachat_df = tagachat_df.drop(columns=['session', 'room', 'reviewer'])
-        tagachat_df = tagachat_df.rename(columns={'participant': 'id'})
-        # Convertir las columnas a partir de la tercera a numeros
-        try:
-            tagachat_df.iloc[:, 2:] = tagachat_df.iloc[:, 2:].astype(float)
-        except:
-            analysis_error(session_name, 'Error converting tagachat data to numbers')
-            return
-        # Hacer la media de las columnas a partir de la segunda, agrupando por id y time
-        tagachat_df = tagachat_df.groupby(['id', 'time']).mean().reset_index()
-        
-        update_percentage(session_name, 10)
          
-        
+def get_tc_data(session_name):
+    twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+    if not twincode_req.ok:
+        return {'error': 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text)}
+    
+    twincode_data = None
+    try:
+        twincode_data = twincode_req.json()
+    except:
+        return {'error': 'Error parsing twincode data for ' + session_name}
+    
+    df = pd.DataFrame(twincode_data)
+    return df
 
+def get_tagachat_data(session_name, reviewers=None):
+    tagachat_url = os.environ.get('TAGACHAT_API_URL') + '/analytics/' + session_name
+
+    if reviewers:
+        string_reviewers = ','.join(reviewers)
+        reviewers_query = '?reviewers=' + string_reviewers
+        tagachat_url += reviewers_query
+    
+    tagachat_req = requests.get(tagachat_url)
+    if not tagachat_req.ok:
+        return {'error': 'Error fetching tagachat data for ' + session_name}
+    
+    tagachat_data = None
+    try:
+        tagachat_data = tagachat_req.json()
+    except:
+        return {'error': 'Error parsing tagachat data for ' + session_name}
+    
+    df = pd.DataFrame(tagachat_data)
+    # Eliminar columna session, room, reviewer y renombrar columna participant por id
+    df = df.drop(columns=['session', 'room', 'reviewer'])
+    df = df.rename(columns={'participant': 'id'})
+    # Convertir las columnas a partir de la tercera a numeros
+    try:
+        df.iloc[:, 2:] = df.iloc[:, 2:].astype(float)
+    except:
+        return {'error': 'Error converting tagachat data to numbers'}
+    # Hacer la media de las columnas a partir de la segunda, agrupando por id y time
+    df = df.groupby(['id', 'time']).mean().reset_index()
+    
+    return df
+    
+def start_analysis(session_name, form1_df, form2_df, tagachat_df, twincode_df):
+    with app.app_context():
+        socket.emit('analysisStarted', {'name': session_name})
+        print(twincode_df)
+        print(tagachat_df)
+        print(form1_df)
+        print(form2_df)
 
 def analysis_error(session_name, message):
     with app.app_context():
