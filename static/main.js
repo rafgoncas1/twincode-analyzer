@@ -19,6 +19,10 @@ const app = {
             form1: null,
             form2: null,
             showScrollTop: false,
+            rooms: null,
+            reviewers: null,
+            selectedReviewers: null,
+            loadingReviewers: false,
         }
     },
 
@@ -36,6 +40,21 @@ const app = {
                 res = res.filter(session => session.name.toLowerCase().includes(lowerCaseSearchTerm));
             }
             return res;
+        },
+        unreviewedRooms() {
+            res = this.rooms.filter(room => {
+                for (const block of room.blocks) {
+                    unreviewedBlock = true;
+                    for (const reviewer of block.reviewers) {
+                        if (this.selectedReviewers.includes(reviewer.reviewer) && reviewer.percentage == 100) {
+                            unreviewedBlock = false;
+                            break;
+                        }
+                    }
+                }
+                return unreviewedBlock;
+            });
+            return res.map(room => room.roomId);
         }
     },
 
@@ -167,6 +186,35 @@ const app = {
             }
         },
 
+        fetchReviewers(sessionName) {
+            this.loadingReviewers = true;
+            fetch('https://tagachat.vercel.app/api/analytics/' + sessionName + '/reviewers')
+            .then(response => {
+                if (response.status == 200) {
+                    return response.json();
+                }
+                throw new Error('Fetch reviewers failed');
+            })
+            .then(data => {
+                this.rooms = data;
+                this.reviewers = new Set();
+                for (const room of this.rooms) {
+                    for (const block of room.blocks) {
+                        for (const reviewer of block.reviewers) {
+                            this.reviewers.add(reviewer.reviewer);
+                        }
+                    }
+                }
+                console.log(this.reviewers);
+                this.selectedReviewers = Array.from(this.reviewers);
+                this.loadingReviewers = false;
+            })
+            .catch(error => {
+                this.notification = {title: "Error", message: error.message, error: true};
+                this.loadingReviewers = false;
+            });
+        },
+
         removeFilters() {
             this.favourites = false;
             this.statusFilter = 'all';
@@ -187,6 +235,9 @@ const app = {
             this.modalSession = null;
             this.form1 = null;
             this.form2 = null;
+            this.rooms = null;
+            this.reviewers = null;
+            this.selectedReviewers = null;
         },
 
         handleFileUpload(event, formName) {
@@ -198,6 +249,7 @@ const app = {
             const formData = new FormData();
             formData.append('form1', this.form1);
             formData.append('form2', this.form2);
+            formData.append('reviewers', JSON.stringify(this.selectedReviewers));
 
             fetch('/api/analysis/' + session.name, {
                 method: 'POST',

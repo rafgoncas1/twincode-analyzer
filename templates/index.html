@@ -29,8 +29,31 @@
                     <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_2.csv') }}" target="_blank">this</a>.</p>
                     <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
                     <br>
-                    <div class="modal-footer d-flex justify-content-end">
-                        <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2">Start Analysis</button>
+                    <h5 class="font-weight-bold">Reviewers</h5>
+                    <div v-if="loadingReviewers" class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                    <div v-else-if="reviewers">
+                        <div class="d-flex flex-row flex-wrap">
+                            <div v-for="reviewer in reviewers" :key="reviewer" class="d-flex flex-row align-items-center mr-3">
+                                <input type="checkbox" :id="reviewer" :value="reviewer" v-model="selectedReviewers">
+                                <label :for="reviewer" class="ml-2">[[reviewer]]</label>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning" role="alert" v-if="unreviewedRooms && unreviewedRooms.length > 0">
+                            <strong>Warning!</strong> The following rooms have not been reviewed by any of the selected reviewers: <b>[[unreviewedRooms]]</b>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Warning!</strong> There are no reviews available for the [[modalSession.name]] session.
+                        </div>
+                    </div>
+                    <br>
+                    <div class="d-flex justify-content-end">
+                        <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !reviewers || !selectedReviewers">Start Analysis</button>
                     </div>
                 </div>
             </div>
@@ -78,7 +101,7 @@
                 <div class="mt-5" v-else>
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
-                            <button @click="openModal(session)" class="btn btn-primary" style="height: 40px;">Start</button>
+                            <button @click="fetchReviewers(session.name); openModal(session);" class="btn btn-primary" style="height: 40px;">Start</button>
                         </div>
                     </div>
                 </div>
