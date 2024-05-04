@@ -191,7 +191,7 @@ def connect_handler():
 def get_tc_data(session_name):
     twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
     if not twincode_req.ok:
-        return {'error': 'Error fetching twincode data for ' + session_name + ' - ' + str(twincode_req.text)}
+        return {'error': 'Error fetching twincode data for ' + session_name}
     
     twincode_data = None
     try:
