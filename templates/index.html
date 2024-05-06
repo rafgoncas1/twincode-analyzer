@@ -35,7 +35,7 @@
                             <span class="sr-only">Loading...</span>
                         </div>
                     </div>
-                    <div v-else-if="reviewers">
+                    <div v-else-if="reviewers && reviewers.size>0">
                         <div class="d-flex flex-row flex-wrap">
                             <div v-for="reviewer in reviewers" :key="reviewer" class="d-flex flex-row align-items-center mr-3">
                                 <input type="checkbox" :id="reviewer" :value="reviewer" v-model="selectedReviewers">
@@ -45,6 +45,9 @@
                         <div class="alert alert-warning" role="alert" v-if="unreviewedRooms && unreviewedRooms.length > 0">
                             <strong>Warning!</strong> The following rooms have not been reviewed by any of the selected reviewers: <b>[[unreviewedRooms]]</b>
                         </div>
+                        <div class="alert alert-danger" role="alert" v-if="selectedReviewers && selectedReviewers.length<1">
+                            Please select at least one reviewer.
+                        </div>
                     </div>
                     <div v-else>
                         <div class="alert alert-warning" role="alert">
@@ -53,7 +56,7 @@
                     </div>
                     <br>
                     <div class="d-flex justify-content-end">
-                        <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !reviewers || !selectedReviewers">Start Analysis</button>
+                        <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !selectedReviewers || selectedReviewers.length<1">Start Analysis</button>
                     </div>
                 </div>
             </div>
