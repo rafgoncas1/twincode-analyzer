@@ -24,10 +24,16 @@
                     <h5 class="font-weight-bold">Form 1</h5>
                     <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_1.csv') }}" target="_blank">this</a>.</p>
                     <input type="file" @change="handleFileUpload($event, 'form1')" class="form-control" accept=".csv" id="formFile1">
+                    <div class="alert alert-danger mt-3" role="alert" v-if="form1Error">
+                        [[form1Error]]
+                    </div>
                     <br>
                     <h5 class="font-weight-bold">Form 2</h5>
                     <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_2.csv') }}" target="_blank">this</a>.</p>
                     <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
+                    <div class="alert alert-danger mt-3" role="alert" v-if="form2Error">
+                        [[form2Error]]
+                    </div>
                     <br>
                     <h5 class="font-weight-bold">Reviewers</h5>
                     <div v-if="loadingReviewers" class="d-flex justify-content-center align-items-center">

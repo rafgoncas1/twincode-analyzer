@@ -23,7 +23,9 @@ const app = {
             reviewers: null,
             selectedReviewers: null,
             loadingReviewers: false,
-            collectingData: false
+            collectingData: false,
+            form1Error: null,
+            form2Error: null
         }
     },
 
@@ -43,6 +45,9 @@ const app = {
             return res;
         },
         unreviewedRooms() {
+            if (!this.rooms) {
+                return [];
+            }
             res = this.rooms.filter(room => {
                 for (const block of room.blocks) {
                     unreviewedBlock = true;
@@ -193,8 +198,9 @@ const app = {
             .then(response => {
                 if (response.status == 200) {
                     return response.json();
-                }
-                throw new Error('Fetch reviewers failed');
+                } else {
+                    throw new Error('Failed to fetch reviewers: ' + response.status + ' ' + response.statusText);
+                }  
             })
             .then(data => {
                 this.rooms = data;
@@ -211,7 +217,6 @@ const app = {
                 this.loadingReviewers = false;
             })
             .catch(error => {
-                this.notification = {title: "Error", message: error.message, error: true};
                 this.loadingReviewers = false;
             });
         },
@@ -236,15 +241,78 @@ const app = {
             this.modalSession = null;
             this.form1 = null;
             this.form2 = null;
+            this.form1Error = null;
+            this.form2Error = null;
             this.rooms = null;
             this.reviewers = null;
             this.selectedReviewers = null;
         },
 
         handleFileUpload(event, formName) {
-            this[formName] = event.target.files[0];
-            console.log(this[formName]);
+
+            if (formName != 'form1' && formName != 'form2') {
+                return;
+            }
+
+            const file = event.target.files[0];
+
+            Papa.parse(file, {
+                header: true,
+                complete: (results) => {
+                    if (this.validateCSV(results, formName)) {
+                        this[formName] = file;
+                    } else {
+                        event.target.value = null;
+                    }
+                },
+                error: (error) => {
+                    event.target.value = null;
+                    this[formName+"Error"] = "Invalid file format: Unable to read csv"
+                }
+            });
         },
+
+        validateCSV(data, formName) {
+            if (formName == 'form1') {
+                if (data.meta.fields.length != 11) {
+                    this[formName+"Error"] = "Invalid file format: Incorrect number of columns, expected 11";
+                    return false;
+                } else {
+                    var invalidColumns = []
+                    var expectedToContain = ['', 'enter your', ...Array(4).fill('regarding'), ...Array(4).fill('during'), 'describe'];
+                    for (let i = 1; i < 11; i++) {
+                        if (!data.meta.fields[i].toLowerCase().includes(expectedToContain[i])) {
+                            invalidColumns.push(i+1);
+                        }
+                    }
+                    if (invalidColumns.length > 0) {
+                        this[formName+"Error"] = "Invalid file format: Incorrect column headers at columns " + invalidColumns.join(", ");
+                        return false;
+                    }
+                }
+            } else if (formName == 'form2') {
+                if (data.meta.fields.length != 19) {
+                    this[formName+"Error"] = "Invalid file format: Incorrect number of columns, expected 19";
+                    return false;
+                } else {
+                    var invalidColumns = []
+                    var expectedToContain = ['', 'enter your', ...Array(4).fill('regarding'), ...Array(4).fill('during'), 'describe', ...Array(5).fill('comparing'), ...Array(3).fill('remember')];
+                    for (let i = 1; i < 19; i++) {
+                        if (!data.meta.fields[i].toLowerCase().includes(expectedToContain[i])) {
+                            invalidColumns.push(i+1);
+                        }
+                    }
+                    if (invalidColumns.length > 0) {
+                        this[formName+"Error"] = "Invalid file format: Incorrect column headers at columns " + invalidColumns.join(", ");
+                        return false;
+                    }
+                }
+            }
+            this[formName+"Error"] = null;
+            return true;
+        },
+
+
 
         startAnalysis(session) {
 
