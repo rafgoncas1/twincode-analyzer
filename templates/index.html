@@ -16,9 +16,6 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-warning" role="alert" v-if="modalSession.status != 'pending'" >
-                        <strong>Warning!</strong> This action will remove the previous analysis of the session.
-                    </div>
                     <p><b  class="text-warning">Important!</b> Upload <b>forms 1 and 2</b> from the [[modalSession.name]] session. Ensure both forms are in <b>.csv</b> format.</p>
                     <br>
                     <h5 class="font-weight-bold">Form 1</h5>
@@ -61,7 +58,10 @@
                         </div>
                     </div>
                     <br>
-                    <div class="d-flex justify-content-end">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <p class="text-danger my-auto mx-3" v-if="modalSession.status != 'pending'" >
+                            This action will remove the previous analysis of the session.
+                        </p>
                         <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !selectedReviewers || selectedReviewers.length<1">Start Analysis</button>
                     </div>
                 </div>
