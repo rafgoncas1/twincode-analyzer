@@ -8,6 +8,8 @@ from sqlalchemy import CheckConstraint
 import pandas as pd
 import threading
 from io import BytesIO
+from processor import process_form1, process_form2, filter_ids, join_files, filter_gender_perception
+import traceback
 
 app = Flask(__name__)
 socket = SocketIO(app)
@@ -15,17 +17,22 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sessions.db'
 db = SQLAlchemy(app)
 
+
 class Session(db.Model):
     name = db.Column(db.String(80), primary_key=True)
     favourite = db.Column(db.Boolean, default=False, nullable=False)
     # Satatus: 'completed', 'running', 'pending'
     status = db.Column(db.String(80), default="pending", nullable=False)
-    __table_args__ = (CheckConstraint("status IN ('completed', 'running', 'pending')", name='status_check'), )
+    __table_args__ = (CheckConstraint(
+        "status IN ('completed', 'running', 'pending')", name='status_check'), )
     percentage = db.Column(db.Integer, default=0, nullable=False)
-    __table_args__ = (CheckConstraint('0<=percentage AND percentage<=100', name='percentage_check'), )
+    __table_args__ = (CheckConstraint(
+        '0<=percentage AND percentage<=100', name='percentage_check'), )
+
 
 with app.app_context():
     db.create_all()
+
 
 def is_logged():
     if session.get('logged_in'):
@@ -33,19 +40,22 @@ def is_logged():
     else:
         return False
 
+
 @app.route('/')
 def index():
     if is_logged():
-            return render_template('index.html')
+        return render_template('index.html')
     else:
         return redirect('/login')
-    
+
+
 @app.route('/login', methods=['GET'])
 def login():
     if is_logged():
         return redirect('/')
     else:
         return render_template('login.html', navbar=False)
+
 
 @app.route('/analysis/<session_name>', methods=['GET'])
 def analysis(session_name):
@@ -65,15 +75,18 @@ def analysis(session_name):
     else:
         return redirect('/login')
 
+
 @app.route('/analysis/<session_name>/plots/<path:filename>')
 def serve_plots(session_name, filename):
     return send_from_directory(f'analysis/{session_name}/plots', filename)
-    
+
+
 @app.errorhandler(404)
 def page_not_found(e=None):
     return render_template('404.html', navbar=False), 404
 
 ### API Routes ###
+
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -84,15 +97,18 @@ def api_login():
     else:
         return jsonify({'message': 'Incorrect password!'}), 403
 
+
 @app.route('/api/logout', methods=['POST'])
 def api_logout():
     session['logged_in'] = False
     return jsonify({'message': 'Logged out successfully!'}), 200
 
+
 @app.route('/api/sessions', methods=['GET'])
 def api_sessions():
     if is_logged():
-        res = requests.get(os.environ.get('TC_API_URL') + '/sessions', headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+        res = requests.get(os.environ.get('TC_API_URL') + '/sessions',
+                           headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
         if res.status_code == 200:
             sessions = res.json()
             for session in sessions:
@@ -105,13 +121,15 @@ def api_sessions():
                     session['favourite'] = False
                     session['status'] = 'completed' if session['name'] == 'ucb1' else 'pending'
                     session['percentage'] = 100 if session['name'] == 'ucb1' else 0
-                    db.session.add(Session(name=session['name'], favourite=session['favourite'], status=session['status'], percentage=session['percentage']))
+                    db.session.add(Session(name=session['name'], favourite=session['favourite'],
+                                   status=session['status'], percentage=session['percentage']))
             db.session.commit()
             return jsonify(sessions), 200
         else:
             return jsonify({'message': 'Error getting sessions from API!'}), 500
     else:
         return jsonify({'message': 'Not logged in!'}), 403
+
 
 @app.route('/api/favourites/<session_name>', methods=['PUT'])
 def api_favourites(session_name):
@@ -121,13 +139,15 @@ def api_favourites(session_name):
         if session:
             session.favourite = request.get_json()['favourite']
             db.session.commit()
-            socket.emit('favouriteUpdated', {'name': session_name, 'favourite': session.favourite})
+            socket.emit('favouriteUpdated', {
+                        'name': session_name, 'favourite': session.favourite})
             return jsonify({'message': 'Favourite updated successfully!'}), 200
         else:
             return jsonify({'message': 'Session not found!'}), 404
     else:
         return jsonify({'message': 'Not logged in!'}), 403
-    
+
+
 @app.route('/api/analysis/<session_name>', methods=['POST'])
 def api_analysis(session_name):
     if is_logged():
@@ -143,7 +163,7 @@ def api_analysis(session_name):
         reviewers = json.loads(request.form.get('reviewers'))
         if not reviewers:
             return jsonify({'message': 'No reviewers supplied'}), 400
-        
+
         form1_df = None
         try:
             form1_data = BytesIO(form1.read())
@@ -169,14 +189,16 @@ def api_analysis(session_name):
         session.status = 'running'
         session.percentage = 1
         db.session.commit()
-        
+
         socket.emit('analysisStarted', {'name': session_name})
-        threading.Thread(target=start_analysis, args=(session_name,form1_df,form2_df,twincode_df,tagachat_df,)).start()
+        threading.Thread(target=start_analysis, args=(
+            session_name, form1_df, form2_df, twincode_df, tagachat_df,)).start()
         return jsonify({'message': 'Analysis started successfully!'}), 202
     else:
         return jsonify({'message': 'Not logged in!'}), 403
 
 ### SocketIO ###
+
 
 @socket.on('connect')
 def connect_handler():
@@ -187,39 +209,43 @@ def connect_handler():
         print('Client connected!')
 
 ### Auxiliar Functions ###
-         
+
+
 def get_tc_data(session_name):
-    twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' + session_name , headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+    twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' +
+                                session_name, headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
     if not twincode_req.ok:
         return {'error': 'Error fetching twincode data for ' + session_name}
-    
+
     twincode_data = None
     try:
         twincode_data = twincode_req.json()
     except:
         return {'error': 'Error parsing twincode data for ' + session_name}
-    
+
     df = pd.DataFrame(twincode_data)
     return df
 
+
 def get_tagachat_data(session_name, reviewers=None):
-    tagachat_url = os.environ.get('TAGACHAT_API_URL') + '/analytics/' + session_name
+    tagachat_url = os.environ.get(
+        'TAGACHAT_API_URL') + '/analytics/' + session_name
 
     if reviewers:
         string_reviewers = ','.join(reviewers)
         reviewers_query = '?reviewers=' + string_reviewers
         tagachat_url += reviewers_query
-    
+
     tagachat_req = requests.get(tagachat_url)
     if not tagachat_req.ok:
         return {'error': 'Error fetching tagachat data for ' + session_name}
-    
+
     tagachat_data = None
     try:
         tagachat_data = tagachat_req.json()
     except:
         return {'error': 'Error parsing tagachat data for ' + session_name}
-    
+
     df = pd.DataFrame(tagachat_data)
     # Eliminar columna session, room, reviewer y renombrar columna participant por id
     df = df.drop(columns=['session', 'room', 'reviewer'])
@@ -231,16 +257,66 @@ def get_tagachat_data(session_name, reviewers=None):
         return {'error': 'Error converting tagachat data to numbers'}
     # Hacer la media de las columnas a partir de la segunda, agrupando por id y time
     df = df.groupby(['id', 'time']).mean().reset_index()
-    
+
     return df
-    
-def start_analysis(session_name, form1_df, form2_df, tagachat_df, twincode_df):
+
+
+def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
     with app.app_context():
         socket.emit('analysisStarted', {'name': session_name})
-        print(twincode_df)
-        print(tagachat_df)
-        print(form1_df)
-        print(form2_df)
+            
+        try:
+            form1_df = process_form1(form1_df)
+            update_percentage(session_name, 5)
+        except:
+            analysis_error(session_name, 'Error processing form1 data!')
+            traceback.print_exc()
+            return
+        
+        try:
+            form2_df = process_form2(form2_df)
+            update_percentage(session_name, 10)
+        except:
+            analysis_error(session_name, 'Error processing form2 data!')
+            traceback.print_exc()
+            return
+        
+        print('Form1 and Form2 processed successfully!')
+        
+        try:
+            form1_df, form2_df, twincode_df, tagachat_df = filter_ids(form1_df, form2_df, twincode_df, tagachat_df)
+            update_percentage(session_name, 15)
+        except:
+            analysis_error(session_name, 'Error filtering data!')
+            traceback.print_exc()
+            return
+                
+        print('Filtering completed!')
+        
+        try:
+            long_df = join_files(form1_df, form2_df, twincode_df, tagachat_df)
+            update_percentage(session_name, 20)
+        except:
+            analysis_error(session_name, 'Error joining files!')
+            traceback.print_exc()
+            return
+        
+        print('Files joined successfully!')
+        
+        try:
+            long_df = filter_gender_perception(long_df)
+            update_percentage(session_name, 25)
+        except:
+            analysis_error(session_name, 'Error filtering by gender perception!')
+            traceback.print_exc()
+            return
+        
+        print('Long df filtered by gender perception!')
+        
+        print(long_df)
+        
+        analysis_error(session_name, 'Analysis not finished!')
+
 
 def analysis_error(session_name, message):
     with app.app_context():
@@ -248,15 +324,18 @@ def analysis_error(session_name, message):
         session.status = 'pending'
         session.percentage = 0
         db.session.commit()
-        socket.emit('analysisError', {'name': session.name, 'message': message})
+        socket.emit('analysisError', {
+                    'name': session.name, 'message': message})
+
 
 def update_percentage(session_name, percentage):
     with app.app_context():
         session = Session.query.get(session_name)
         session.percentage = percentage
         db.session.commit()
-        socket.emit('percentageUpdate', {'name': session.name, 'percentage': session.percentage})
-    
+        socket.emit('percentageUpdate', {
+                    'name': session.name, 'percentage': session.percentage})
+
 
 if __name__ == '__main__':
     app.run()
