@@ -9,7 +9,9 @@ import pandas as pd
 import threading
 from io import BytesIO
 from processor import process_form1, process_form2, filter_ids, join_files, filter_gender_perception, create_cps_df, create_wide_df
+from analyzer import analyzeVariableBetween, analyzeVariableWithin, analyzeCpsBetween, analyzeCpsWithin
 import traceback
+import math
 
 app = Flask(__name__)
 socket = SocketIO(app)
@@ -264,18 +266,19 @@ def get_tagachat_data(session_name, reviewers=None):
 def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
     with app.app_context():
         socket.emit('analysisStarted', {'name': session_name})
-            
+        
+        # Process form1    
         try:
             form1_df = process_form1(form1_df)
-            update_percentage(session_name, 5)
+            update_percentage(session_name, 2)
         except:
             analysis_error(session_name, 'Error processing form1 data!')
             traceback.print_exc()
             return
         
+        # Process form2
         try:
             form2_df = process_form2(form2_df)
-            update_percentage(session_name, 10)
         except:
             analysis_error(session_name, 'Error processing form2 data!')
             traceback.print_exc()
@@ -283,9 +286,9 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         print('Form1 and Form2 processed successfully!')
         
+        # Filter ids
         try:
             form1_df, form2_df, twincode_df, tagachat_df = filter_ids(form1_df, form2_df, twincode_df, tagachat_df)
-            update_percentage(session_name, 13)
         except:
             analysis_error(session_name, 'Error filtering data!')
             traceback.print_exc()
@@ -293,9 +296,9 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
                 
         print('Filtering completed!')
         
+        # Join files
         try:
             long_df = join_files(form1_df, form2_df, twincode_df, tagachat_df)
-            update_percentage(session_name, 17)
         except:
             analysis_error(session_name, 'Error joining files!')
             traceback.print_exc()
@@ -303,9 +306,9 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         print('Files joined successfully!')
         
+        # Filter by gender correct perception
         try:
             long_df = filter_gender_perception(long_df)
-            update_percentage(session_name, 19)
         except:
             analysis_error(session_name, 'Error filtering long_df by gender perception!')
             traceback.print_exc()
@@ -313,9 +316,9 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         print('Long df filtered by gender perception!')
         
+        # Create CPS dataframe
         try:
             cps_df = create_cps_df(long_df, form2_df)
-            update_percentage(session_name, 20)
         except:
             analysis_error(session_name, 'Error creating CPS dataframe!')
             traceback.print_exc()
@@ -323,24 +326,90 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         print('CPS df created successfully!')
         
+        # Create wide dataframe
         try:
             wide_df = create_wide_df(long_df)
-            update_percentage(session_name, 21)
         except:
             analysis_error(session_name, 'Error creating wide dataframe!')
             traceback.print_exc()
             return
         
+        long_df.to_csv(session_name + "_long_df.csv", index=True)
+        wide_df.to_csv(session_name + "_wide_df.csv", index=True)
+        cps_df.to_csv(session_name + "_cps_df.csv", index=True)
+        
         print('Wide df created successfully!')
         
-        if not os.path.exists('analysis/' + session_name):
-            os.makedirs('analysis/' + session_name)
+        update_percentage(session_name, 10)
         
-        long_df.to_csv('analysis/' + session_name + '/long_df.csv', index=False)
-        cps_df.to_csv('analysis/' + session_name + '/cps_df.csv', index=False)
-        wide_df.to_csv('analysis/' + session_name + '/wide_df.csv', index=False)
+        # Create analysis folder for session
+        if not os.path.exists("analysis"):
+            os.makedirs("analysis")
+        if not os.path.exists("analysis/" + session_name):
+            os.makedirs("analysis/" + session_name)
+        if not os.path.exists("analysis/" + session_name + "/plots"):
+            os.makedirs("analysis/" + session_name + "/plots")
+        if not os.path.exists("analysis/" + session_name + "/plots/between"):
+            os.makedirs("analysis/" + session_name + "/plots/between")
+        if not os.path.exists("analysis/" + session_name + "/plots/within"):
+            os.makedirs("analysis/" + session_name + "/plots/within")
+        if not os.path.exists("analysis/" + session_name + "/plots/within/ppgender"):
+            os.makedirs("analysis/" + session_name + "/plots/within/ppgender")
+        if not os.path.exists("analysis/" + session_name + "/plots/within/ipgender"):
+            os.makedirs("analysis/" + session_name + "/plots/within/ipgender")
+        if not os.path.exists("analysis/" + session_name + "/plots/cps_between"):
+            os.makedirs("analysis/" + session_name + "/plots/cps_between")
+        if not os.path.exists("analysis/" + session_name + "/plots/cps_within"):
+            os.makedirs("analysis/" + session_name + "/plots/cps_within")
         
-        analysis_error(session_name, 'Analysis not finished!')
+        print('Analysis folders created successfully!')
+        
+        # List of names of the columns which are numeric
+        excluded = ["okv","okv_rf","kov","kov_rf"] # Exclude some irrelevant variables
+        variables = set(long_df.select_dtypes(include=['int64', 'float64']).columns)
+        variables = variables.difference(excluded)
+
+        cps_variables = set(cps_df.select_dtypes(include=['int64', 'float64']).columns)
+        
+        results = {"between": {}, "within": {"ppgender": {}, "ipgender": {}}, "cps_between": {}, "cps_within": {}}
+        
+        iterations = len(variables) + len(cps_variables)
+        percentage_accum = 10
+        percentage_update = math.floor(90/iterations)
+        
+        for variable in variables:
+            print("\n##### Analyzing " + variable + " for "+session_name+" #####")
+            try:
+                results["between"][variable] = analyzeVariableBetween(variable, wide_df, session_name)
+                results["within"]["ppgender"][variable] = analyzeVariableWithin(variable, "ppgender", long_df, session_name)
+                results["within"]["ipgender"][variable] = analyzeVariableWithin(variable, "ipgender", long_df, session_name)
+            except:
+                analysis_error(session_name, 'Error analyzing variable ' + variable)
+                traceback.print_exc()
+                return
+            
+            percentage_accum += percentage_update
+            update_percentage(session_name, percentage_accum)
+    
+        for variable in cps_variables:
+            print("\n##### Analyzing " + variable + " for "+session_name+" #####")
+            try:
+                results["cps_between"][variable] = analyzeCpsBetween(variable, cps_df, session_name)
+                results["cps_within"][variable] = analyzeCpsWithin(variable, cps_df, session_name)
+            except:
+                analysis_error(session_name, 'Error analyzing CPS variable ' + variable)
+                traceback.print_exc()
+                return
+            
+            percentage_accum += percentage_update
+            update_percentage(session_name, percentage_accum)
+            
+        # Save analysis as json
+        with open("analysis/" + session_name + "/analysis.json", "w") as outfile:
+            json.dump(analysis, outfile, indent=4, sort_keys=True)
+    
+        
+        analysis_completed(session_name)
 
 
 def analysis_error(session_name, message):
@@ -360,6 +429,14 @@ def update_percentage(session_name, percentage):
         db.session.commit()
         socket.emit('percentageUpdate', {
                     'name': session.name, 'percentage': session.percentage})
+
+def analysis_completed(session_name):
+    with app.app_context():
+        session = Session.query.get(session_name)
+        session.status = 'completed'
+        session.percentage = 100
+        db.session.commit()
+        socket.emit('analysisCompleted', {'name': session.name})
 
 
 if __name__ == '__main__':

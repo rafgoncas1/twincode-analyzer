@@ -1,7 +1,5 @@
 import pandas as pd
-import os
 import numpy as np
-from scipy.stats import chi2_contingency
 
 
 def process_form1(df):

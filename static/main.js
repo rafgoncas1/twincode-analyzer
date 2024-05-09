@@ -414,3 +414,14 @@ socket.on('percentageUpdate', (data) => {
         }
     });
 });
+
+socket.on('analysisCompleted', (data) => {
+    mounted.notification = {title: data.name, message: "Analysis completed"};
+    // Update status in the sessions list
+    mounted.sessions.forEach(session => {
+        if (session.name == data.name) {
+            session.status = "completed";
+            session.percentage = 100;
+        }
+    });
+});
