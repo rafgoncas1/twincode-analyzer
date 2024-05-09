@@ -334,10 +334,6 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
             traceback.print_exc()
             return
         
-        long_df.to_csv(session_name + "_long_df.csv", index=True)
-        wide_df.to_csv(session_name + "_wide_df.csv", index=True)
-        cps_df.to_csv(session_name + "_cps_df.csv", index=True)
-        
         print('Wide df created successfully!')
         
         update_percentage(session_name, 10)
@@ -363,9 +359,13 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
             os.makedirs("analysis/" + session_name + "/plots/cps_within")
         
         print('Analysis folders created successfully!')
+
+        long_df.to_csv("analysis/" + session_name + "/long_df.csv", index=False)
+        wide_df.to_csv("analysis/" + session_name + "/wide_df.csv", index=False)
+        cps_df.to_csv("analysis/" + session_name + "/cps_df.csv", index=False)
         
         # List of names of the columns which are numeric
-        excluded = ["okv","okv_rf","kov","kov_rf"] # Exclude some irrelevant variables
+        excluded = ["okv","okv_rf","kov","kov_rf", "ct_sec", "ct", "ct_rf"] # Exclude some irrelevant variables
         variables = set(long_df.select_dtypes(include=['int64', 'float64']).columns)
         variables = variables.difference(excluded)
 
@@ -403,10 +403,15 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
             
             percentage_accum += percentage_update
             update_percentage(session_name, percentage_accum)
-            
-        # Save analysis as json
-        with open("analysis/" + session_name + "/analysis.json", "w") as outfile:
-            json.dump(analysis, outfile, indent=4, sort_keys=True)
+        
+        try:
+            # Save analysis as json
+            with open("analysis/" + session_name + "/analysis.json", "w") as outfile:
+                json.dump(results, outfile, indent=4, sort_keys=True)
+        except:
+            analysis_error(session_name, 'Error saving analysis results!')
+            traceback.print_exc()
+            return
     
         
         analysis_completed(session_name)

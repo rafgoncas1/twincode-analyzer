@@ -2,10 +2,11 @@ import pandas as pd
 from scipy.stats import shapiro, ttest_ind, ttest_rel, mannwhitneyu, wilcoxon, norm
 from statistics import mean, stdev
 from math import sqrt
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 import seaborn as sns
 import numpy as np
-import json
 import pingouin as pg
 
 def analyzeVariableBetween(variable, wide_df, session_name):
@@ -13,7 +14,6 @@ def analyzeVariableBetween(variable, wide_df, session_name):
     columns_to_select = ['id', 'group', 'gender', 'ipgender_t1', 'ipgender_t2', 'ppgender_t1', 'ppgender_t2', variable+'_t1', variable+'_t2']
     
     subset_wide = wide_df[columns_to_select].copy()
-    subset_wide.to_csv("subset_wide.csv", index=True)
     subset_wide["score_distance"] = abs(subset_wide[variable + "_t2"] - subset_wide[variable + "_t1"])
     
     control_group_distance = subset_wide[subset_wide["group"] == "ctrl"]["score_distance"]
@@ -165,8 +165,8 @@ def analyzeVariableWithin(variable, groupby, long_df, session_name):
     subset_wide.columns = ["_".join(col) for col in subset_wide.columns]
     subset_wide.reset_index(inplace=True)
     
-    men = subset_wide[variable + "_man"]
-    women = subset_wide[variable + "_woman"]
+    men = subset_wide[variable + "_Male"]
+    women = subset_wide[variable + "_Female"]
     n = subset_wide.shape[0]
     paired_difference =  men - women
     mean_men = mean(men)
@@ -391,8 +391,8 @@ def analyzeCpsWithin(variable, cps_df, session_name):
     columns_to_select = ["id","gender", variable]
     
     subset_cps = cps_df[cps_df["group"]=="exp"][columns_to_select].copy()
-    men = subset_cps[subset_cps["gender"]=="man"][variable]
-    women = subset_cps[subset_cps["gender"]=="woman"][variable]
+    men = subset_cps[subset_cps["gender"]=="Male"][variable]
+    women = subset_cps[subset_cps["gender"]=="Female"][variable]
     
     mean_men = mean(men)
     mean_women = mean(women)
@@ -423,15 +423,19 @@ def analyzeCpsWithin(variable, cps_df, session_name):
     else:
         print("Women group for " + variable + " has zero range")
     
-    # Unpaired two-tailed t-test for equality of means
-    _, ttest_p = ttest_ind(men, women, equal_var=False, alternative="two-sided")
-    res["ttest_p"] = ttest_p
-    print("\nParametric one-tailed (ctrl < exp) unpaired t-test for " + variable + ": pvalue=" + str(ttest_p))
+    # Comprueba que las listas men y women contienen más de un valor único
+    if len(set(men)) > 1 and len(set(women)) > 1:
+        # Unpaired two-tailed t-test for equality of means
+        _, ttest_p = ttest_ind(men, women, equal_var=False, alternative="two-sided")
+        res["ttest_p"] = ttest_p
+        print("\nParametric one-tailed (ctrl < exp) unpaired t-test for " + variable + ": pvalue=" + str(ttest_p))
 
-    if ttest_p < 0.05:
-        print("The difference between the means is statistically significant")
+        if ttest_p < 0.05:
+            print("The difference between the means is statistically significant")
+        else:
+            print("The difference between the means is not statistically significant")
     else:
-        print("The difference between the means is not statistically significant")
+        print("Insufficient unique values to perform t-test")
     
     # One-way ANOVA test for score between gender
     aov = pg.anova(data=subset_cps, dv=variable, between="gender")

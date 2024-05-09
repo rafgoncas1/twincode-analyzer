@@ -81,14 +81,14 @@ def process_form2(df):
                                  np.where(df["av"].str.match(r".*(remember|recuerdo).*"), "idr", np.nan)))
 
     # ppgender columns 1 and 2 none, idr, man, woman
-    df["ppgender1"] = np.where(df["ppgender1"].notnull() & df["ppgender1"].str.upper().str.match(r".*(AVATAR A).*"), "man",
-                               np.where(df["ppgender1"].notnull() & df["ppgender1"].str.upper().str.match(r".*(AVATAR B).*"), "woman",
+    df["ppgender1"] = np.where(df["ppgender1"].notnull() & df["ppgender1"].str.upper().str.match(r".*(AVATAR A).*"), "Male",
+                               np.where(df["ppgender1"].notnull() & df["ppgender1"].str.upper().str.match(r".*(AVATAR B).*"), "Female",
                                         np.where(df["ppgender1"].notnull() & df["ppgender1"].str.lower().str.match(r".*(remember|recuerdo).*"), "idr",
                                                  np.where(df["av"] == "no", "none",
                                                           np.where(df["av"] == "idr", "idr", np.nan)))))
 
-    df["ppgender2"] = np.where(df["ppgender2"].notnull() & df["ppgender2"].str.upper().str.match(r".*(AVATAR A).*"), "man",
-                               np.where(df["ppgender2"].notnull() & df["ppgender2"].str.upper().str.match(r".*(AVATAR B).*"), "woman",
+    df["ppgender2"] = np.where(df["ppgender2"].notnull() & df["ppgender2"].str.upper().str.match(r".*(AVATAR A).*"), "Male",
+                               np.where(df["ppgender2"].notnull() & df["ppgender2"].str.upper().str.match(r".*(AVATAR B).*"), "Female",
                                         np.where(df["ppgender2"].notnull() & df["ppgender2"].str.lower().str.match(r".*(remember|recuerdo).*"), "idr",
                                                  np.where(df["av"] == "no", "none",
                                                           np.where(df["av"] == "idr", "idr", np.nan)))))
@@ -189,7 +189,7 @@ def create_cps_df(long_df, form2):
     cps_df = pd.merge(cps_df, form2[["id"]+cps_names], on="id")
 
     # If the induced partner gender at t2 is "man", reverse the score (max score - score) for all the CPS variables
-    cps_df[cps_names] = np.where(cps_df[["ipgender"]] == "man", 10 - cps_df[cps_names], cps_df[cps_names])
+    cps_df[cps_names] = np.where(cps_df[["ipgender"]] == "Male", 10 - cps_df[cps_names], cps_df[cps_names])
 
     # cps average
     cps_df["cps"] = cps_df[cps_names].mean(axis=1)

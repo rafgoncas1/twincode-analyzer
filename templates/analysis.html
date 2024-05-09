@@ -74,9 +74,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
-                        <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05
-                                else 'Not significantly different from normal distribution' }}</td>
+                        {% if values.sw_p_control|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -92,9 +97,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
-                        <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05
-                                else 'Not significantly different from normal distribution' }}</td>
+                        {% if values.sw_p_experimental|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -115,9 +125,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.ttest_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.ttest_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -138,10 +153,15 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.cohens_d)}}</td>
-                        <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if
-                                values.cohens_d < 0.2 else 'Medium effect size' if values.cohens_d < 0.5
-                                else 'Large effect size' }}</td>
+                        {% if values.cohens_d|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.cohens_d)}}</td>
+                            <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if
+                                    values.cohens_d < 0.2 else 'Medium effect size' if values.cohens_d < 0.5
+                                    else 'Large effect size' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -162,9 +182,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.mwu_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.mwu_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.mwu_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -185,9 +210,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.mwu_r)}}</td>
-                        <td>{{ 'Negligible effect size' if values.mwu_r < 0.1 else 'Small effect size' if values.mwu_r < 0.3
-                                else 'Medium effect size' if values.mwu_r < 0.5 else 'Large effect size' }}</td>
+                        {% if values.mwu_r|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.mwu_r)}}</td>
+                            <td>{{ 'Negligible effect size' if values.mwu_r < 0.1 else 'Small effect size' if values.mwu_r < 0.3
+                                    else 'Medium effect size' if values.mwu_r < 0.5 else 'Large effect size' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -241,9 +271,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
-                        <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05
-                                else 'Not significantly different from normal distribution' }}</td>
+                        {% if values.sw_p_control|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.sw_p_control)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_control < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -259,9 +294,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
-                        <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05
-                                else 'Not significantly different from normal distribution' }}</td>
+                        {% if values.sw_p_experimental|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.sw_p_experimental)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p_experimental < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -282,9 +322,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.ttest_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.ttest_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -305,9 +350,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.anova_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.anova_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.anova_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -328,9 +378,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.mwu_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.mwu_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.mwu_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -382,9 +437,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.sw_p)}}</td>
-                        <td>{{ 'Significantly different from normal distribution' if values.sw_p < 0.05
-                                else 'Not significantly different from normal distribution' }}</td>
+                        {% if values.sw_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.sw_p)}}</td>
+                            <td>{{ 'Significantly different from normal distribution' if values.sw_p < 0.05
+                                    else 'Not significantly different from normal distribution' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -405,9 +465,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.ttest_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.ttest_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -428,9 +493,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.cohens_d)}}</td>
-                        <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if values.cohens_d
-                                < 0.2 else 'Medium effect size' if values.cohens_d < 0.5 else 'Large effect size' }}</td>
+                        {% if values.cohens_d|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.cohens_d)}}</td>
+                            <td>{{ 'Negligible effect size' if values.cohens_d < 0.1 else'Small effect size' if values.cohens_d
+                                    < 0.2 else 'Medium effect size' if values.cohens_d < 0.5 else 'Large effect size' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -451,9 +521,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.anova_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.anova_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.anova_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -474,9 +549,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.wilcoxon_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.wilcoxon_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.wilcoxon_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.wilcoxon_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.wilcoxon_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -497,10 +577,15 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.wilcoxon_r)}}</td>
-                        <td>{{ 'Negligible effect size' if values.wilcoxon_r < 0.1 else 'Small effect size' if
-                                values.wilcoxon_r < 0.3 else 'Medium effect size' if values.wilcoxon_r < 0.5
-                                else 'Large effect size' }}</td>
+                        {% if values.wilcoxon_r|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.wilcoxon_r)}}</td>
+                            <td>{{ 'Negligible effect size' if values.wilcoxon_r < 0.1 else 'Small effect size' if
+                                    values.wilcoxon_r < 0.3 else 'Medium effect size' if values.wilcoxon_r < 0.5
+                                    else 'Large effect size' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -608,9 +693,14 @@
                 </thead>
                 <tbody>
                     <tr>
+                    {% if values.sw_p_men|default(None) is not none %}
                         <td>{{"{:.6f}".format(values.sw_p_men)}}</td>
                         <td>{{ 'Significantly different from normal distribution' if values.sw_p_men < 0.05
                                 else 'Not significantly different from normal distribution' }}</td>
+                    {% else %}
+                        <td>N/A</td>
+                        <td>N/A</td>
+                    {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -625,11 +715,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
+                    {% if values.sw_p_women|default(None) is not none %}
                         <td>{{"{:.6f}".format(values.sw_p_women)}}</td>
                         <td>{{ 'Significantly different from normal distribution' if values.sw_p_women < 0.05
                                 else 'Not significantly different from normal distribution' }}</td>
-                    </tr>
+                    {% else %}
+                        <td>N/A</td>
+                        <td>N/A</td>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -649,9 +742,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.ttest_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.ttest_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.ttest_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.ttest_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -672,9 +770,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.anova_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.anova_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.anova_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.anova_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -695,9 +798,14 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{"{:.6f}".format(values.mwu_p)}}</td>
-                        <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
-                                else 'Mean difference is not statistically significant' }}</td>
+                        {% if values.mwu_p|default(None) is not none %}
+                            <td>{{"{:.6f}".format(values.mwu_p)}}</td>
+                            <td>{{ 'Mean difference is statistically significant' if values.mwu_p < 0.05
+                                    else 'Mean difference is not statistically significant' }}</td>
+                        {% else %}
+                            <td>N/A</td>
+                            <td>N/A</td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
