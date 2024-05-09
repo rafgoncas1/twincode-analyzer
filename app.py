@@ -8,7 +8,7 @@ from sqlalchemy import CheckConstraint
 import pandas as pd
 import threading
 from io import BytesIO
-from processor import process_form1, process_form2, filter_ids, join_files, filter_gender_perception
+from processor import process_form1, process_form2, filter_ids, join_files, filter_gender_perception, create_cps_df, create_wide_df
 import traceback
 
 app = Flask(__name__)
@@ -285,7 +285,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         try:
             form1_df, form2_df, twincode_df, tagachat_df = filter_ids(form1_df, form2_df, twincode_df, tagachat_df)
-            update_percentage(session_name, 15)
+            update_percentage(session_name, 13)
         except:
             analysis_error(session_name, 'Error filtering data!')
             traceback.print_exc()
@@ -295,7 +295,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         try:
             long_df = join_files(form1_df, form2_df, twincode_df, tagachat_df)
-            update_percentage(session_name, 20)
+            update_percentage(session_name, 17)
         except:
             analysis_error(session_name, 'Error joining files!')
             traceback.print_exc()
@@ -305,15 +305,40 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         
         try:
             long_df = filter_gender_perception(long_df)
-            update_percentage(session_name, 25)
+            update_percentage(session_name, 19)
         except:
-            analysis_error(session_name, 'Error filtering by gender perception!')
+            analysis_error(session_name, 'Error filtering long_df by gender perception!')
             traceback.print_exc()
             return
         
         print('Long df filtered by gender perception!')
         
-        print(long_df)
+        try:
+            cps_df = create_cps_df(long_df, form2_df)
+            update_percentage(session_name, 20)
+        except:
+            analysis_error(session_name, 'Error creating CPS dataframe!')
+            traceback.print_exc()
+            return
+        
+        print('CPS df created successfully!')
+        
+        try:
+            wide_df = create_wide_df(long_df)
+            update_percentage(session_name, 21)
+        except:
+            analysis_error(session_name, 'Error creating wide dataframe!')
+            traceback.print_exc()
+            return
+        
+        print('Wide df created successfully!')
+        
+        if not os.path.exists('analysis/' + session_name):
+            os.makedirs('analysis/' + session_name)
+        
+        long_df.to_csv('analysis/' + session_name + '/long_df.csv', index=False)
+        cps_df.to_csv('analysis/' + session_name + '/cps_df.csv', index=False)
+        wide_df.to_csv('analysis/' + session_name + '/wide_df.csv', index=False)
         
         analysis_error(session_name, 'Analysis not finished!')
 

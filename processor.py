@@ -183,3 +183,25 @@ def filter_gender_perception(long_df):
     long_df = long_df[~long_df["id"].isin(excluded_exp_ids)]
     
     return long_df
+
+def create_cps_df(long_df, form2):
+    cps_names = ["cps" + str(i) for i in range(1, 6)]
+    # get cps variables from form2 -> taking in account that if the perceived gender in t2 is man, we have to reverse the cps
+    cps_df = long_df[long_df["time"] == "t2"][["id", "group", "gender", "ipgender"]]
+    cps_df = pd.merge(cps_df, form2[["id"]+cps_names], on="id")
+
+    # If the induced partner gender at t2 is "man", reverse the score (max score - score) for all the CPS variables
+    cps_df[cps_names] = np.where(cps_df[["ipgender"]] == "man", 10 - cps_df[cps_names], cps_df[cps_names])
+
+    # cps average
+    cps_df["cps"] = cps_df[cps_names].mean(axis=1)
+    
+    return cps_df
+
+def create_wide_df(long_df):
+    # Create wide format
+    wide_df = long_df.pivot(index=["id", "group", "gender", "partnerid"], columns="time")
+    wide_df.columns = ["_".join(col) for col in wide_df.columns]
+    wide_df = wide_df.reset_index()
+    
+    return wide_df
