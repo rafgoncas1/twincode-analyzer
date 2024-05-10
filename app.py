@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, redirect, request, jsonify, send_from_directory
+from flask import Flask, render_template, session, redirect, request, jsonify, send_from_directory, send_file
 import os
 from flask_socketio import SocketIO
 import requests
@@ -12,6 +12,8 @@ from processor import process_form1, process_form2, filter_ids, join_files, filt
 from analyzer import analyzeVariableBetween, analyzeVariableWithin, analyzeCpsBetween, analyzeCpsWithin
 import traceback
 import math
+import zipfile
+import io
 
 app = Flask(__name__)
 socket = SocketIO(app)
@@ -74,6 +76,26 @@ def analysis(session_name):
         data['session'] = session_name
 
         return render_template('analysis.html', data=data)
+    else:
+        return redirect('/login')
+
+@app.route('/analysis/<session_name>/download', methods=['GET'])
+def download(session_name):
+    if is_logged():
+        folder_path = 'analysis/' + session_name
+        if os.path.exists(folder_path):
+            memory_file = io.BytesIO()
+            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, _, files in os.walk(folder_path):
+                    for filename in files:
+                        file_path = os.path.join(root, filename)
+                        relative_path = os.path.join(session_name,os.path.relpath(file_path, folder_path))
+                        zipf.write(file_path, arcname=relative_path)
+            memory_file.seek(0)
+
+            return send_file(memory_file, download_name=session_name + '.zip', as_attachment=True)
+        else:
+            return page_not_found()
     else:
         return redirect('/login')
 
