@@ -25,7 +25,8 @@ const app = {
             loadingReviewers: false,
             collectingData: false,
             form1Error: null,
-            form2Error: null
+            form2Error: null,
+            selectedSessions: []
         }
     },
 
@@ -76,6 +77,8 @@ const app = {
 
     mounted() {
         if (window.location.pathname == '/') {
+            this.fetchAnalyses();
+        } else if (window.location.pathname == '/custom') {
             this.fetchSessions();
         }
         window.addEventListener('scroll', this.checkScroll);
@@ -150,6 +153,24 @@ const app = {
                     return response.json();
                 }
                 throw new Error('Fetch sessions failed');
+            })
+            .then(data => {
+                this.sessions = data;
+                this.isLoading = false;
+            })
+            .catch(error => {
+                this.notification = {title: "Error", message: error.message, error: true};
+                this.isLoading = false;
+            });
+        },
+
+        fetchAnalyses() {
+            fetch('/api/analyses')
+            .then(response => {
+                if (response.status == 200) {
+                    return response.json();
+                }
+                throw new Error('Fetch analyses failed');
             })
             .then(data => {
                 this.sessions = data;

@@ -18,20 +18,24 @@ import io
 app = Flask(__name__)
 socket = SocketIO(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sessions.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///analysis.db'
 db = SQLAlchemy(app)
 
 
-class Session(db.Model):
+class Analysis(db.Model):
     name = db.Column(db.String(80), primary_key=True)
     favourite = db.Column(db.Boolean, default=False, nullable=False)
     # Satatus: 'completed', 'running', 'pending'
     status = db.Column(db.String(80), default="pending", nullable=False)
+    custom = db.Column(db.Boolean, default=False, nullable=False)
     __table_args__ = (CheckConstraint(
         "status IN ('completed', 'running', 'pending')", name='status_check'), )
     percentage = db.Column(db.Integer, default=0, nullable=False)
     __table_args__ = (CheckConstraint(
         '0<=percentage AND percentage<=100', name='percentage_check'), )
+    
+    def to_json(self):
+        return {'name': self.name, 'favourite': self.favourite, 'status': self.status, 'percentage': self.percentage, 'custom': self.custom}
 
 
 with app.app_context():
@@ -60,49 +64,56 @@ def login():
     else:
         return render_template('login.html', navbar=False)
 
-
-@app.route('/analysis/<session_name>', methods=['GET'])
-def analysis(session_name):
+@app.route('/custom', methods=['GET'])
+def custom():
     if is_logged():
-        # Check if session exists and is completed
-        session = Session.query.get(session_name)
-        if not session or session.status != 'completed':
+        return render_template('custom.html')
+    else:
+        return redirect('/login')
+
+
+@app.route('/analysis/<analysis_name>', methods=['GET'])
+def analysis(analysis_name):
+    if is_logged():
+        # Check if analysis exists and is completed
+        analysis = Analysis.query.get(analysis_name)
+        if not analysis or analysis.status != 'completed':
             return page_not_found()
 
         #  Load json data from analysis results
-        with open('analysis/' + session_name + '/analysis.json') as json_file:
+        with open('analysis/' + analysis_name + '/analysis.json') as json_file:
             data = json.load(json_file)
 
-        data['session'] = session_name
+        data['name'] = analysis_name
 
         return render_template('analysis.html', data=data)
     else:
         return redirect('/login')
 
-@app.route('/analysis/<session_name>/download', methods=['GET'])
-def download(session_name):
+@app.route('/analysis/<analysis_name>/download', methods=['GET'])
+def download(analysis_name):
     if is_logged():
-        folder_path = 'analysis/' + session_name
+        folder_path = 'analysis/' + analysis_name
         if os.path.exists(folder_path):
             memory_file = io.BytesIO()
             with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for root, _, files in os.walk(folder_path):
                     for filename in files:
                         file_path = os.path.join(root, filename)
-                        relative_path = os.path.join(session_name,os.path.relpath(file_path, folder_path))
+                        relative_path = os.path.join(analysis_name,os.path.relpath(file_path, folder_path))
                         zipf.write(file_path, arcname=relative_path)
             memory_file.seek(0)
 
-            return send_file(memory_file, download_name=session_name + '.zip', as_attachment=True)
+            return send_file(memory_file, download_name=analysis_name + '.zip', as_attachment=True)
         else:
             return page_not_found()
     else:
         return redirect('/login')
 
 
-@app.route('/analysis/<session_name>/plots/<path:filename>')
-def serve_plots(session_name, filename):
-    return send_from_directory(f'analysis/{session_name}/plots', filename)
+@app.route('/analysis/<analysis_name>/plots/<path:filename>')
+def serve_plots(analysis_name, filename):
+    return send_from_directory(f'analysis/{analysis_name}/plots', filename)
 
 
 @app.errorhandler(404)
@@ -128,43 +139,40 @@ def api_logout():
     return jsonify({'message': 'Logged out successfully!'}), 200
 
 
-@app.route('/api/sessions', methods=['GET'])
+@app.route('/api/analyses', methods=['GET'])
 def api_sessions():
     if is_logged():
-        res = requests.get(os.environ.get('TC_API_URL') + '/sessions',
-                           headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
-        if res.status_code == 200:
-            sessions = res.json()
-            for session in sessions:
-                db_session = Session.query.get(session['name'])
-                if db_session:
-                    session['favourite'] = db_session.favourite
-                    session['status'] = db_session.status
-                    session['percentage'] = db_session.percentage
-                else:
-                    session['favourite'] = False
-                    session['status'] = 'completed' if session['name'] == 'ucb1' else 'pending'
-                    session['percentage'] = 100 if session['name'] == 'ucb1' else 0
-                    db.session.add(Session(name=session['name'], favourite=session['favourite'],
-                                   status=session['status'], percentage=session['percentage']))
-            db.session.commit()
-            return jsonify(sessions), 200
+        if update_sessions():
+            analyses = Analysis.query.all()
+            analyses_json = [analysis.to_json() for analysis in analyses]
+            return jsonify(analyses_json), 200
         else:
             return jsonify({'message': 'Error getting sessions from API!'}), 500
     else:
         return jsonify({'message': 'Not logged in!'}), 403
 
-
-@app.route('/api/favourites/<session_name>', methods=['PUT'])
-def api_favourites(session_name):
+@app.route('/api/sessions', methods=['GET'])
+def api_sessions_twincode():
     if is_logged():
-        print('Updating favourite for session ' + session_name + '...')
-        session = Session.query.get(session_name)
-        if session:
-            session.favourite = request.get_json()['favourite']
+        if update_sessions():
+            sessions = Analysis.query.filter_by(custom=False).all()
+            sessions_json = [session.to_json() for session in sessions]
+            return jsonify(sessions_json), 200
+        else:
+            return jsonify({'message': 'Error getting sessions from API!'}), 500
+    else:
+        return jsonify({'message': 'Not logged in!'}), 403
+
+@app.route('/api/favourites/<analysis_name>', methods=['PUT'])
+def api_favourites(analysis_name):
+    if is_logged():
+        print('Updating favourite for session ' + analysis_name + '...')
+        analysis = Analysis.query.get(analysis_name)
+        if analysis:
+            analysis.favourite = request.get_json()['favourite']
             db.session.commit()
             socket.emit('favouriteUpdated', {
-                        'name': session_name, 'favourite': session.favourite})
+                        'name': analysis_name, 'favourite': analysis.favourite})
             return jsonify({'message': 'Favourite updated successfully!'}), 200
         else:
             return jsonify({'message': 'Session not found!'}), 404
@@ -173,9 +181,9 @@ def api_favourites(session_name):
 
 
 @app.route('/api/analysis/<session_name>', methods=['POST'])
-def api_analysis(session_name):
+def api_session_analysis(session_name):
     if is_logged():
-        session = Session.query.get(session_name)
+        session = Analysis.query.get(session_name)
         if not session:
             return jsonify({'message': 'Session not found!'}), 404
         form1 = request.files.get('form1')
@@ -234,6 +242,24 @@ def connect_handler():
 
 ### Auxiliar Functions ###
 
+def update_sessions():
+    with app.app_context():
+        try:
+            res = requests.get(os.environ.get('TC_API_URL') + '/sessions',
+                                headers={'Authorization': os.environ.get('TC_ADMIN_SECRET')})
+            if res.status_code == 200:
+                sessions = res.json()
+                for session in sessions:
+                    db_session = Analysis.query.get(session['name'])
+                    if not db_session:
+                        db.session.add(Analysis(name=session['name']))
+                db.session.commit()
+                return True
+            else:
+                return False
+        except:
+            return False
+
 
 def get_tc_data(session_name):
     twincode_req = requests.get(os.environ.get('TC_API_URL') + '/analytics/' +
@@ -285,16 +311,16 @@ def get_tagachat_data(session_name, reviewers=None):
     return df
 
 
-def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
+def start_analysis(analysis_name, form1_df, form2_df, twincode_df, tagachat_df):
     with app.app_context():
-        socket.emit('analysisStarted', {'name': session_name})
+        socket.emit('analysisStarted', {'name': analysis_name})
         
         # Process form1    
         try:
             form1_df = process_form1(form1_df)
-            update_percentage(session_name, 2)
+            update_percentage(analysis_name, 2)
         except:
-            analysis_error(session_name, 'Error processing form1 data!')
+            analysis_error(analysis_name, 'Error processing form1 data!')
             traceback.print_exc()
             return
         
@@ -302,7 +328,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         try:
             form2_df = process_form2(form2_df)
         except:
-            analysis_error(session_name, 'Error processing form2 data!')
+            analysis_error(analysis_name, 'Error processing form2 data!')
             traceback.print_exc()
             return
         
@@ -312,7 +338,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         try:
             form1_df, form2_df, twincode_df, tagachat_df = filter_ids(form1_df, form2_df, twincode_df, tagachat_df)
         except:
-            analysis_error(session_name, 'Error filtering data!')
+            analysis_error(analysis_name, 'Error filtering data!')
             traceback.print_exc()
             return
                 
@@ -322,7 +348,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         try:
             long_df = join_files(form1_df, form2_df, twincode_df, tagachat_df)
         except:
-            analysis_error(session_name, 'Error joining files!')
+            analysis_error(analysis_name, 'Error joining files!')
             traceback.print_exc()
             return
         
@@ -332,7 +358,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         try:
             long_df = filter_gender_perception(long_df)
         except:
-            analysis_error(session_name, 'Error filtering long_df by gender perception!')
+            analysis_error(analysis_name, 'Error filtering long_df by gender perception!')
             traceback.print_exc()
             return
         
@@ -342,7 +368,7 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         try:
             cps_df = create_cps_df(long_df, form2_df)
         except:
-            analysis_error(session_name, 'Error creating CPS dataframe!')
+            analysis_error(analysis_name, 'Error creating CPS dataframe!')
             traceback.print_exc()
             return
         
@@ -352,39 +378,39 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         try:
             wide_df = create_wide_df(long_df)
         except:
-            analysis_error(session_name, 'Error creating wide dataframe!')
+            analysis_error(analysis_name, 'Error creating wide dataframe!')
             traceback.print_exc()
             return
         
         print('Wide df created successfully!')
         
-        update_percentage(session_name, 10)
+        update_percentage(analysis_name, 10)
         
         # Create analysis folder for session
         if not os.path.exists("analysis"):
             os.makedirs("analysis")
-        if not os.path.exists("analysis/" + session_name):
-            os.makedirs("analysis/" + session_name)
-        if not os.path.exists("analysis/" + session_name + "/plots"):
-            os.makedirs("analysis/" + session_name + "/plots")
-        if not os.path.exists("analysis/" + session_name + "/plots/between"):
-            os.makedirs("analysis/" + session_name + "/plots/between")
-        if not os.path.exists("analysis/" + session_name + "/plots/within"):
-            os.makedirs("analysis/" + session_name + "/plots/within")
-        if not os.path.exists("analysis/" + session_name + "/plots/within/ppgender"):
-            os.makedirs("analysis/" + session_name + "/plots/within/ppgender")
-        if not os.path.exists("analysis/" + session_name + "/plots/within/ipgender"):
-            os.makedirs("analysis/" + session_name + "/plots/within/ipgender")
-        if not os.path.exists("analysis/" + session_name + "/plots/cps_between"):
-            os.makedirs("analysis/" + session_name + "/plots/cps_between")
-        if not os.path.exists("analysis/" + session_name + "/plots/cps_within"):
-            os.makedirs("analysis/" + session_name + "/plots/cps_within")
+        if not os.path.exists("analysis/" + analysis_name):
+            os.makedirs("analysis/" + analysis_name)
+        if not os.path.exists("analysis/" + analysis_name + "/plots"):
+            os.makedirs("analysis/" + analysis_name + "/plots")
+        if not os.path.exists("analysis/" + analysis_name + "/plots/between"):
+            os.makedirs("analysis/" + analysis_name + "/plots/between")
+        if not os.path.exists("analysis/" + analysis_name + "/plots/within"):
+            os.makedirs("analysis/" + analysis_name + "/plots/within")
+        if not os.path.exists("analysis/" + analysis_name + "/plots/within/ppgender"):
+            os.makedirs("analysis/" + analysis_name + "/plots/within/ppgender")
+        if not os.path.exists("analysis/" + analysis_name + "/plots/within/ipgender"):
+            os.makedirs("analysis/" + analysis_name + "/plots/within/ipgender")
+        if not os.path.exists("analysis/" + analysis_name + "/plots/cps_between"):
+            os.makedirs("analysis/" + analysis_name + "/plots/cps_between")
+        if not os.path.exists("analysis/" + analysis_name + "/plots/cps_within"):
+            os.makedirs("analysis/" + analysis_name + "/plots/cps_within")
         
         print('Analysis folders created successfully!')
 
-        long_df.to_csv("analysis/" + session_name + "/long_df.csv", index=False)
-        wide_df.to_csv("analysis/" + session_name + "/wide_df.csv", index=False)
-        cps_df.to_csv("analysis/" + session_name + "/cps_df.csv", index=False)
+        long_df.to_csv("analysis/" + analysis_name + "/long_df.csv", index=False)
+        wide_df.to_csv("analysis/" + analysis_name + "/wide_df.csv", index=False)
+        cps_df.to_csv("analysis/" + analysis_name + "/cps_df.csv", index=False)
         
         # List of names of the columns which are numeric
         excluded = ["okv","okv_rf","kov","kov_rf", "ct_sec", "ct", "ct_rf"] # Exclude some irrelevant variables
@@ -400,70 +426,70 @@ def start_analysis(session_name, form1_df, form2_df, twincode_df, tagachat_df):
         percentage_update = math.floor(90/iterations)
         
         for variable in variables:
-            print("\n##### Analyzing " + variable + " for "+session_name+" #####")
+            print("\n##### Analyzing " + variable + " for "+analysis_name+" #####")
             try:
-                results["between"][variable] = analyzeVariableBetween(variable, wide_df, session_name)
-                results["within"]["ppgender"][variable] = analyzeVariableWithin(variable, "ppgender", long_df, session_name)
-                results["within"]["ipgender"][variable] = analyzeVariableWithin(variable, "ipgender", long_df, session_name)
+                results["between"][variable] = analyzeVariableBetween(variable, wide_df, analysis_name)
+                results["within"]["ppgender"][variable] = analyzeVariableWithin(variable, "ppgender", long_df, analysis_name)
+                results["within"]["ipgender"][variable] = analyzeVariableWithin(variable, "ipgender", long_df, analysis_name)
             except:
-                analysis_error(session_name, 'Error analyzing variable ' + variable)
+                analysis_error(analysis_name, 'Error analyzing variable ' + variable)
                 traceback.print_exc()
                 return
             
             percentage_accum += percentage_update
-            update_percentage(session_name, percentage_accum)
+            update_percentage(analysis_name, percentage_accum)
     
         for variable in cps_variables:
-            print("\n##### Analyzing " + variable + " for "+session_name+" #####")
+            print("\n##### Analyzing " + variable + " for "+analysis_name+" #####")
             try:
-                results["cps_between"][variable] = analyzeCpsBetween(variable, cps_df, session_name)
-                results["cps_within"][variable] = analyzeCpsWithin(variable, cps_df, session_name)
+                results["cps_between"][variable] = analyzeCpsBetween(variable, cps_df, analysis_name)
+                results["cps_within"][variable] = analyzeCpsWithin(variable, cps_df, analysis_name)
             except:
-                analysis_error(session_name, 'Error analyzing CPS variable ' + variable)
+                analysis_error(analysis_name, 'Error analyzing CPS variable ' + variable)
                 traceback.print_exc()
                 return
             
             percentage_accum += percentage_update
-            update_percentage(session_name, percentage_accum)
+            update_percentage(analysis_name, percentage_accum)
         
         try:
             # Save analysis as json
-            with open("analysis/" + session_name + "/analysis.json", "w") as outfile:
+            with open("analysis/" + analysis_name + "/analysis.json", "w") as outfile:
                 json.dump(results, outfile, indent=4, sort_keys=True)
         except:
-            analysis_error(session_name, 'Error saving analysis results!')
+            analysis_error(analysis_name, 'Error saving analysis results!')
             traceback.print_exc()
             return
     
         
-        analysis_completed(session_name)
+        analysis_completed(analysis_name)
 
 
-def analysis_error(session_name, message):
+def analysis_error(analysis_name, message):
     with app.app_context():
-        session = Session.query.get(session_name)
-        session.status = 'pending'
-        session.percentage = 0
+        analysis = Analysis.query.get(analysis_name)
+        analysis.status = 'pending'
+        analysis.percentage = 0
         db.session.commit()
         socket.emit('analysisError', {
-                    'name': session.name, 'message': message})
+                    'name': analysis.name, 'message': message})
 
 
-def update_percentage(session_name, percentage):
+def update_percentage(analysis_name, percentage):
     with app.app_context():
-        session = Session.query.get(session_name)
-        session.percentage = percentage
+        analysis = Analysis.query.get(analysis_name)
+        analysis.percentage = percentage
         db.session.commit()
         socket.emit('percentageUpdate', {
-                    'name': session.name, 'percentage': session.percentage})
+                    'name': analysis.name, 'percentage': analysis.percentage})
 
-def analysis_completed(session_name):
+def analysis_completed(analysis_name):
     with app.app_context():
-        session = Session.query.get(session_name)
-        session.status = 'completed'
-        session.percentage = 100
+        analysis = Analysis.query.get(analysis_name)
+        analysis.status = 'completed'
+        analysis.percentage = 100
         db.session.commit()
-        socket.emit('analysisCompleted', {'name': session.name})
+        socket.emit('analysisCompleted', {'name': analysis.name})
 
 
 if __name__ == '__main__':

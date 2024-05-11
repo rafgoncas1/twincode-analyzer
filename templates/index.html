@@ -98,7 +98,18 @@
         </div>
         <hr>
     </div>
-    <div class="grid-container">
+    <div class="grid-container" v-if="!isLoading && sessions.length > 0">
+        <div class="card p-3 mb-2 shadow" style="height: 260px;">
+            <h3 class="heading font-weight-bold mt-2 text-center">CUSTOM ANALYSIS</h3>
+            <p class="mt-4 text-center">
+                Select various sessions and start an analysis with joined data
+            </p>
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <a href="/custom">
+                    <button class="material-icons btn btn-light" style="height: 80px ;width: 80px;border-radius: 50%; font-size: 50px;">add_circle</button>
+                </a>
+            </div>
+        </div>
         <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2 shadow" style="height: 260px;">
             <div class="d-flex justify-content-between">
                 <div class="d-flex flex-row align-items-center">

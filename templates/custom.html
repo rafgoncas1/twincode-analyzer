@@ -1,0 +1,36 @@
+{% extends "main.html" %}
+
+{% block content %}
+    <div class="bg-white p-5 rounded shadow">
+        <h1 class="text-center">New Custom Analysis</h1>
+        <hr>
+        <div class="m-5">
+            <label for="customName" class="font-weight-bold">Custom Analysis Name</label>
+            <input id="customName" type="text" class="form-control w-50 mb-4" placeholder="Custom analysis name" v-for="customName">
+            <b>Select the sessions to include in the analysis</b>
+            <div v-if="isLoading" class="d-flex justify-content-center align-items-center mt-5">
+                <div class="spinner-border mt-5" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            <div v-else-if="!isLoading && sessions.length > 0" class="mt-3">
+                <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control w-50 mb-3">
+                <div class="d-flex flex-row flex-wrap">
+                    <div v-for="session in filteredSessions" :key="session" class="d-flex flex-row align-items-center mr-3">
+                        <input type="checkbox" :id="session" :value="session" v-model="selectedSessions">
+                        <label :for="session" class="ml-2">[[session.name]]</label>
+                    </div>
+                </div>
+                <div class="alert alert-danger mt-2" role="alert" v-if="selectedSessions && selectedSessions.length<2">
+                    Please select at least two sessions.
+                </div>
+            </div>
+            <div v-else class="mt-3">
+                <div class="alert alert-danger" role="alert">
+                    <strong>Warning!</strong> Could not retrieve sessions from Twincode.
+                </div>
+            </div>
+        </div>
+        
+    </div>
+{% endblock %}
