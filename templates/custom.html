@@ -4,31 +4,111 @@
     <div class="bg-white p-5 rounded shadow">
         <h1 class="text-center">New Custom Analysis</h1>
         <hr>
-        <div class="m-5">
+        <div class="m-5" v-if="!nextPage">
             <label for="customName" class="font-weight-bold">Custom Analysis Name</label>
-            <input id="customName" type="text" class="form-control w-50 mb-4" placeholder="Custom analysis name" v-for="customName">
+            <input id="customName" type="text" class="form-control w-50 mb-2" v-model="customName" placeholder="Custom analysis name">
+            <div style="height: 30px;">
+                <p class="text text-danger" role="alert" v-if="!customName">
+                    Please enter a name for the custom analysis.
+                </p>
+                <p class="text text-danger" role="alert"v-if="customName && analyses.some(analysis => analysis.name == customName)">
+                    An analysis with this name already exists. Please choose a different name.
+                </p>
+            </div>
             <b>Select the sessions to include in the analysis</b>
-            <div v-if="isLoading" class="d-flex justify-content-center align-items-center mt-5">
+            <div v-if="isLoading" class="d-flex justify-content-center align-items-center" style="height: 370px;">
                 <div class="spinner-border mt-5" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>
             </div>
             <div v-else-if="!isLoading && sessions.length > 0" class="mt-3">
-                <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control w-50 mb-3">
-                <div class="d-flex flex-row flex-wrap">
-                    <div v-for="session in filteredSessions" :key="session" class="d-flex flex-row align-items-center mr-3">
-                        <input type="checkbox" :id="session" :value="session" v-model="selectedSessions">
-                        <label :for="session" class="ml-2">[[session.name]]</label>
+                <div class="d-flex flex-row flex-wrap" style="height: 60px;">
+                    <div class="alert alert-primary mr-2 d-flex flex-row align-items-center justify-content-center" v-for="(selectedSession, index) in selectedSessions" :key="selectedSession" role="alert">
+                        [[selectedSession]]
+                        <button @click="selectedSessions.splice(index,1);" type="button" class="close ml-2">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
+                    <div v-if="selectedSessions.length<1" class="alert alert-warning" role="alert">
+                        No sessions selected.
+                    </div>
+
                 </div>
-                <div class="alert alert-danger mt-2" role="alert" v-if="selectedSessions && selectedSessions.length<2">
-                    Please select at least two sessions.
+                <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control w-50 mb-3">
+                <div class="d-flex flex-column overflow-auto card" style="max-height: 200px;">
+                    <button v-for="session in filteredSessions.filter(s => !selectedSessions.includes(s))" :key="session" @click="selectedSessions.push(session);" class="btn btn-light w-100 text-left">
+                        [[session]]
+                    </button>
+                </div>
+                <div class="text-center" style="height: 40px;">
+                    <p class="text text-danger" v-if="selectedSessions && selectedSessions.length<2">
+                        Please select at least two sessions.
+                    </p>
                 </div>
             </div>
             <div v-else class="mt-3">
                 <div class="alert alert-danger" role="alert">
                     <strong>Warning!</strong> Could not retrieve sessions from Twincode.
                 </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-end align-items-center mt-5">
+                <button @click="nextPage = true; fetchCustomReviewers();" class="btn btn-success" :disabled="!customName || customName && analyses.some(analysis => analysis.name == customName) || !selectedSessions || selectedSessions.length<2">Next page</button>
+            </div>
+        </div>
+        <div class="m-5" v-else>
+            <p><b  class="text-warning">Important!</b> Upload <b>forms 1 and 2</b> from the [[customName]] analysis. Ensure both forms are in <b>.csv</b> format.</p>
+            <br>
+
+            <h5 class="font-weight-bold">Form 1</h5>
+            <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_1.csv') }}" target="_blank">this</a>.</p>
+            <input type="file" @change="handleFileUpload($event, 'form1')" class="form-control" accept=".csv" id="formFile1">
+            <div class="alert alert-danger mt-3" role="alert" v-if="form1Error">
+                [[form1Error]]
+            </div>
+            <br>
+
+            <h5 class="font-weight-bold">Form 2</h5>
+            <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_2.csv') }}" target="_blank">this</a>.</p>
+            <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
+            <div class="alert alert-danger mt-3" role="alert" v-if="form2Error">
+                [[form2Error]]
+            </div>
+            <br>
+
+            <h5 class="font-weight-bold">Reviewers</h5>
+            <div v-if="loadingReviewers" class="d-flex justify-content-center align-items-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+            <div v-else>
+                <div v-for="session in selectedSessions" :key="session">
+                    <h6 class="font-weight-bold">[[session]]</h6>
+                    <div v-if="reviewers[session] && reviewers[session].size>0">
+                        <div class="d-flex flex-row flex-wrap">
+                            <div v-for="reviewer in reviewers[session]" :key="reviewer" class="d-flex flex-row align-items-center mr-3">
+                                <input type="checkbox" :id="reviewer" :value="reviewer" v-model="selectedReviewers[session]">
+                                <label :for="reviewer" class="ml-2">[[reviewer]]</label>
+                            </div>
+                        </div>
+                        <div class="alert alert-danger" role="alert" v-if="selectedReviewers[session] && selectedReviewers[session].length<1">
+                            Please select at least one reviewer for the [[session]] session.
+                        </div>
+                        <div class="alert alert-warning" role="alert" v-else-if="customUnreviewedRooms[session] && customUnreviewedRooms[session].length > 0">
+                            <strong>Warning!</strong> The following rooms have not been reviewed by any of the selected reviewers: <p style="display: inline;" v-for="(room, index) in customUnreviewedRooms[session]" :key="room">[[room]]<span v-if="index < customUnreviewedRooms[session].length - 1">, </span></p>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Warning!</strong> There are no reviews available for the [[session]] session.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mt-5">
+                <button @click="nextPage = false;" class="btn btn-danger">Previous page</button>
             </div>
         </div>
         

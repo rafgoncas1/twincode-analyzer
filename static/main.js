@@ -8,6 +8,7 @@ const app = {
             password: '',
             errorMessage: null,
             successMessage: null,
+            analyses: [],
             sessions: [],
             isLoading: true,
             notification: null,
@@ -22,26 +23,36 @@ const app = {
             rooms: null,
             reviewers: null,
             selectedReviewers: null,
-            loadingReviewers: false,
+            loadingReviewers: true,
             collectingData: false,
             form1Error: null,
             form2Error: null,
-            selectedSessions: []
+            selectedSessions: [],
+            customName: '',
+            nextPage: false,
         }
     },
 
     computed: {
-        filteredSessions() {
-            res = this.sessions;
+        filteredAnalyses() {
+            res = this.analyses;
             if (this.favourites) {
-                res = this.sessions.filter(session => session.favourite);
+                res = res.filter(analysis => analysis.favourite);
             }
             if (this.statusFilter != 'all') {
-                res = res.filter(session => session.status == this.statusFilter);
+                res = res.filter(analysis => analysis.status == this.statusFilter);
             }
             if (this.searchTerm != '') {
                 let lowerCaseSearchTerm = this.searchTerm.toLowerCase();
-                res = res.filter(session => session.name.toLowerCase().includes(lowerCaseSearchTerm));
+                res = res.filter(analysis => analysis.name.toLowerCase().includes(lowerCaseSearchTerm));
+            }
+            return res;
+        },
+        filteredSessions() {
+            res = this.sessions;
+            if (this.searchTerm != '') {
+                let lowerCaseSearchTerm = this.searchTerm.toLowerCase();
+                res = res.filter(session => session.toLowerCase().includes(lowerCaseSearchTerm));
             }
             return res;
         },
@@ -62,6 +73,28 @@ const app = {
                 return unreviewedBlock;
             });
             return res.map(room => room.roomId);
+        },
+        customUnreviewedRooms() {
+            if (!this.rooms) {
+                return {};
+            }
+            res = {};
+            for (const [key,value] of Object.entries(this.rooms)) {
+                res[key] = value.filter(room => {
+                    for (const block of room.blocks) {
+                        unreviewedBlock = true;
+                        for (const reviewer of block.reviewers) {
+                            if (this.selectedReviewers[key].includes(reviewer.reviewer) && reviewer.percentage == 100) {
+                                unreviewedBlock = false;
+                                break;
+                            }
+                        }
+                    }
+                    return unreviewedBlock;
+                })
+                .map(room => room.roomId);
+            }
+            return res;
         }
     },
 
@@ -76,10 +109,8 @@ const app = {
     },
 
     mounted() {
-        if (window.location.pathname == '/') {
+        if (window.location.pathname == '/' || window.location.pathname == '/custom') {
             this.fetchAnalyses();
-        } else if (window.location.pathname == '/custom') {
-            this.fetchSessions();
         }
         window.addEventListener('scroll', this.checkScroll);
     },
@@ -146,24 +177,6 @@ const app = {
             this.notification = null;
         },
 
-        fetchSessions() {
-            fetch('/api/sessions')
-            .then(response => {
-                if (response.status == 200) {
-                    return response.json();
-                }
-                throw new Error('Fetch sessions failed');
-            })
-            .then(data => {
-                this.sessions = data;
-                this.isLoading = false;
-            })
-            .catch(error => {
-                this.notification = {title: "Error", message: error.message, error: true};
-                this.isLoading = false;
-            });
-        },
-
         fetchAnalyses() {
             fetch('/api/analyses')
             .then(response => {
@@ -173,7 +186,10 @@ const app = {
                 throw new Error('Fetch analyses failed');
             })
             .then(data => {
-                this.sessions = data;
+                this.analyses = data;
+                if (window.location.pathname == '/custom') {
+                    this.sessions = data.filter(analysis => !analysis.custom).map(analysis => {return analysis.name});
+                }
                 this.isLoading = false;
             })
             .catch(error => {
@@ -182,9 +198,9 @@ const app = {
             });
         },
 
-        addRemoveFavourite(session) {
-            newStatus = !session.favourite;
-            fetch('/api/favourites/' + session.name, {
+        addRemoveFavourite(analysis) {
+            newStatus = !analysis.favourite;
+            fetch('/api/favourites/' + analysis.name, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -193,11 +209,11 @@ const app = {
             })
             .then(response => {
                 if (response.status != 200) {
-                    throw new Error("Failed to update favourite status for " + session.name);
+                    throw new Error("Failed to update favourite status for " + analysis.name);
                 }
             })
             .catch((error) => {
-                this.notification = {title: session.name, message: error.message, error: true};
+                this.notification = {title: analysis.name, message: error.message, error: true};
             });
         },
 
@@ -242,14 +258,61 @@ const app = {
             });
         },
 
+        fetchCustomReviewers() {
+            this.loadingReviewers = true;
+            this.rooms = {};
+            this.reviewers = {};
+            this.selectedReviewers = {};
+            let promises = [];
+
+            for(const session of this.selectedSessions) {
+                let promise = fetch('https://tagachat.vercel.app/api/analytics/' + session + '/reviewers')
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json();
+                    } else {
+                        throw new Error('Failed to fetch reviewers: ' + response.status + ' ' + response.statusText);
+                    }
+                })
+                .then(data => {
+
+                    this.rooms[session] = data;
+
+                    const reviewersSet = new Set();
+                    for (const room of this.rooms[session]) {
+                        for (const block of room.blocks) {
+                            for (const reviewer of block.reviewers) {
+                                reviewersSet.add(reviewer.reviewer);
+                            }
+                        }
+                    }
+
+                    this.reviewers[session] = reviewersSet;
+
+                    this.selectedReviewers[session] = Array.from(this.reviewers[session]);
+
+                })
+                .catch(error => {
+                    this.rooms[session] = [];
+                    this.reviewers[session] = new Set();
+                    this.selectedReviewers[session] = [];
+                });
+                promises.push(promise);
+            }
+
+            Promise.all(promises).then(() => {
+                this.loadingReviewers = false;
+            });
+        },
+
         removeFilters() {
             this.favourites = false;
             this.statusFilter = 'all';
             this.searchTerm = '';
         },
 
-        viewAnalysis(session) {
-            window.location.href = '/analysis/' + session.name;
+        viewAnalysis(analysis) {
+            window.location.href = '/analysis/' + analysis.name;
         },
 
         openModal(session) {
@@ -335,7 +398,7 @@ const app = {
 
 
 
-        startAnalysis(session) {
+        startSessionAnalysis(session) {
 
             if (!this.form1 || !this.form2) {
                 this.notification = {title: session.name, message: "Please select both files", error: true};
@@ -393,9 +456,9 @@ const mounted = createApp(app).mount('#app')
 socket.on('favouriteUpdated', (data) => {
     mounted.notification = {title: data.name, message: data.favourite ? "Added to favourites" : "Removed from favourites"};
     // Update favourite status in the sessions list
-    mounted.sessions.forEach(session => {
-        if (session.name == data.name) {
-            session.favourite = data.favourite;
+    mounted.analyses.forEach(analysis => {
+        if (analysis.name == data.name) {
+            analysis.favourite = data.favourite;
         }
     });
 });
@@ -408,10 +471,10 @@ socket.on('analysisStarted', (data) => {
 
     mounted.notification = {title: data.name, message: "Analysis started"};
     // Update status in the sessions list
-    mounted.sessions.forEach(session => {
-        if (session.name == data.name) {
-            session.status = "running";
-            session.percentage = 1;
+    mounted.analyses.forEach(analysis => {
+        if (analysis.name == data.name) {
+            analysis.status = "running";
+            analysis.percentage = 1;
         }
     });
 });
@@ -419,19 +482,19 @@ socket.on('analysisStarted', (data) => {
 socket.on('analysisError', (data) => {
     mounted.notification = {title: data.name, message: data.message, error: true};
     // Update status in the sessions list
-    mounted.sessions.forEach(session => {
-        if (session.name == data.name) {
-            session.status = "pending";
-            session.percentage = 0;
+    mounted.analyses.forEach(analysis => {
+        if (analysis.name == data.name) {
+            analysis.status = "pending";
+            analysis.percentage = 0;
         }
     });
 });
 
 socket.on('percentageUpdate', (data) => {
     // Update percentage in the sessions list
-    mounted.sessions.forEach(session => {
-        if (session.name == data.name) {
-            session.percentage = data.percentage;
+    mounted.analyses.forEach(analysis => {
+        if (analysis.name == data.name) {
+            analysis.percentage = data.percentage;
         }
     });
 });
@@ -439,10 +502,10 @@ socket.on('percentageUpdate', (data) => {
 socket.on('analysisCompleted', (data) => {
     mounted.notification = {title: data.name, message: "Analysis completed"};
     // Update status in the sessions list
-    mounted.sessions.forEach(session => {
-        if (session.name == data.name) {
-            session.status = "completed";
-            session.percentage = 100;
+    mounted.analyses.forEach(analysis => {
+        if (analysis.name == data.name) {
+            analysis.status = "completed";
+            analysis.percentage = 100;
         }
     });
 });

@@ -62,7 +62,7 @@
                         <p class="text-danger my-auto mx-3" v-if="modalSession.status != 'pending'" >
                             This action will remove the previous analysis of the session.
                         </p>
-                        <button @click="startAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !selectedReviewers || selectedReviewers.length<1">Start Analysis</button>
+                        <button @click="startSessionAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !selectedReviewers || selectedReviewers.length<1">Start Analysis</button>
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
             </div>
         </div>
     </div>
-    <div class="filters" v-if="!isLoading && sessions.length > 0">
+    <div class="filters" v-if="!isLoading && analyses.length > 0">
         <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
             <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control mb-2 mb-md-0 mr-5" style="max-width: 100%; height: 50px; border: black 1px solid;">
             <div class="d-flex flex-row">
@@ -98,7 +98,7 @@
         </div>
         <hr>
     </div>
-    <div class="grid-container" v-if="!isLoading && sessions.length > 0">
+    <div class="grid-container" v-if="!isLoading && analyses.length > 0">
         <div class="card p-3 mb-2 shadow" style="height: 260px;">
             <h3 class="heading font-weight-bold mt-2 text-center">CUSTOM ANALYSIS</h3>
             <p class="mt-4 text-center">
@@ -110,37 +110,37 @@
                 </a>
             </div>
         </div>
-        <div v-for="session in filteredSessions" :key="session.name" class="card p-3 mb-2 shadow" style="height: 260px;">
+        <div v-for="analysis in filteredAnalyses" :key="analysis.name" class="card p-3 mb-2 shadow" style="height: 260px;">
             <div class="d-flex justify-content-between">
                 <div class="d-flex flex-row align-items-center">
-                    <button @click="addRemoveFavourite(session)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: session.favourite ? 'gold' : 'black' }">star</button>
+                    <button @click="addRemoveFavourite(analysis)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: analysis.favourite ? 'gold' : 'black' }">star</button>
                 </div>
-                <div class="badge" v-if="session.status=='completed'"> <span data-color="green">Analyzed</span> </div>
-                <div class="badge" v-else-if="session.status=='running'"> 
+                <div class="badge" v-if="analysis.status=='completed'"> <span data-color="green">Analyzed</span> </div>
+                <div class="badge" v-else-if="analysis.status=='running'"> 
                     <span data-color="blue">Running</span> 
                 </div>
                 <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
             </div>
             <div class="mt-5">
-                <h3 class="heading font-weight-bold">[[session.name]]</h3>
-                <div class="mt-5" v-if="session.status=='running'">
+                <h3 class="heading font-weight-bold">[[analysis.name]]</h3>
+                <div class="mt-5" v-if="analysis.status=='running'">
                     <div class="progress" style="height: 20px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: session.percentage + '%' }" :aria-valuenow="session.percentage" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: analysis.percentage + '%' }" :aria-valuenow="analysis.percentage" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <span class="text1">Analyzing session...</span> 
+                    <span class="text1">Analyzing...</span> 
                 </div>
-                <div class="mt-5" v-else-if="session.status=='completed'">
+                <div class="mt-5" v-else-if="analysis.status=='completed'">
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
-                            <button @click="viewAnalysis(session)" class="btn btn-success mr-3" style="height: 40px;">View</button>
-                            <button @click="fetchReviewers(session.name); openModal(session);" class="btn btn-danger" style="height: 40px;">Restart</button>
+                            <button @click="viewAnalysis(analysis)" class="btn btn-success mr-3" style="height: 40px;">View</button>
+                            <button @click="fetchReviewers(analysis.name); openModal(analysis);" class="btn btn-danger" style="height: 40px;">Restart</button>
                         </div>
                     </div>
                 </div>
                 <div class="mt-5" v-else>
                     <div class="d-flex flex-row justify-content-between align-items-center">
                         <div class="d-flex flex-row">
-                            <button @click="fetchReviewers(session.name); openModal(session);" class="btn btn-primary" style="height: 40px;">Start</button>
+                            <button @click="fetchReviewers(analysis.name); openModal(analysis);" class="btn btn-primary" style="height: 40px;">Start</button>
                         </div>
                     </div>
                 </div>
