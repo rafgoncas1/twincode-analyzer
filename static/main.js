@@ -438,6 +438,44 @@ const app = {
             });
         },
 
+        startCustomAnalysis() {
+
+            if (!this.form1 || !this.form2) {
+                this.notification = {title: "Custom Analysis", message: "Please select both files", error: true};
+                return;
+            }
+
+            this.collectingData = true;
+
+            const formData = new FormData();
+            formData.append('form1', this.form1);
+            formData.append('form2', this.form2);
+            formData.append('reviewers', JSON.stringify(this.selectedReviewers));
+            formData.append('name', this.customName);
+
+            fetch('/api/analysis/custom', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+
+                if (response.status != 202) {
+                    this.collectingData = false;
+                    this.form1 = null;
+                    this.form2 = null;
+                    this.showModal = true;
+                    return response.json().then(data => {
+                        throw new Error(data);
+                    });
+                }
+                this.collectingData = false;
+                window.location.href = '/';
+            })
+            .catch((error) => {
+                this.notification = {title: "Custom Analysis", message: error.message, error: true};
+            });
+        },
+
         printPage() {
             window.print();
         }

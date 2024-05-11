@@ -228,6 +228,79 @@ def api_session_analysis(session_name):
         return jsonify({'message': 'Analysis started successfully!'}), 202
     else:
         return jsonify({'message': 'Not logged in!'}), 403
+    
+@app.route('/api/analysis/custom', methods=['POST'])
+def api_custom_analysis():
+    if is_logged():
+        form1 = request.files.get('form1')
+        if not form1:
+            return jsonify({'message': 'Form1 not found!'}), 400
+        form2 = request.files.get('form2')
+        if not form2:
+            return jsonify({'message': 'Form2 not found!'}), 400
+        reviewers = json.loads(request.form.get('reviewers'))
+        if not reviewers:
+            return jsonify({'message': 'No reviewers supplied'}), 400
+        analysis_name = request.form.get('name')
+        if not analysis_name:
+            return jsonify({'message': 'No analysis name supplied'}), 400
+        
+        selected_sessions = list(reviewers.keys())
+        
+        form1_df = None
+        try:
+            form1_data = BytesIO(form1.read())
+            form1_df = pd.read_csv(form1_data)
+        except:
+            return jsonify({'message': 'Error parsing form1 data!'}), 400
+        
+        form2_df = None
+        try:
+            form2_data = BytesIO(form2.read())
+            form2_df = pd.read_csv(form2_data)
+        except:
+            return jsonify({'message': 'Error parsing form2 data!'}), 400
+        
+        twincode_df = None
+        tagachat_df = None
+
+        for session_name in selected_sessions:
+            twincode_data = get_tc_data(session_name)
+            if 'error' in twincode_data:
+                return jsonify(twincode_data['error']), 500
+            if twincode_df is None:
+                twincode_df = twincode_data
+            else:
+                twincode_df = pd.concat([twincode_df, twincode_data])
+        
+            tagachat_data = get_tagachat_data(session_name, reviewers[session_name])
+            if 'error' in tagachat_data:
+                return jsonify(tagachat_data['error']), 500
+            if tagachat_df is None:
+                tagachat_df = tagachat_data
+            else:
+                tagachat_df = pd.concat([tagachat_df, tagachat_data])
+        
+        session = Analysis.query.get(analysis_name)
+        if not session:
+            session = Analysis(name=analysis_name, custom=True)
+            db.session.add(session)
+            db.session.commit()
+        else:
+            return jsonify({'message': 'Analysis name already exists!'}), 400
+        
+        session.status = 'running'
+        session.percentage = 1
+        db.session.commit()
+
+        socket.emit('analysisStarted', {'name': analysis_name})
+        threading.Thread(target=start_analysis, args=(
+            analysis_name, form1_df, form2_df, twincode_df, tagachat_df,)).start()
+        
+
+        return jsonify({'message': 'Analysis started successfully!'}), 202
+    else:
+        return jsonify({'message': 'Not logged in!'}), 403
 
 ### SocketIO ###
 
