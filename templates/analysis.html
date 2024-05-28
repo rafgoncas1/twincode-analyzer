@@ -31,11 +31,56 @@
 
     <div>
         <h1 class="mt-5">Index</h1>
+        <p class="mt-3">This index shows only relevant variables for the study in each block</h3>
         <ul>
-            <li><a href="#1.1">1.1 Variable analysis: Control vs Experimental</a></li>
-            <li><a href="#1.2">1.2 CPS analysis: Control vs Experimental</a></li>
-            <li><a href="#2.1">2.1 Variable analysis: ppgender in experimental group</a></li>
-            <li><a href="#2.2">2.2 CPS analysis: CPS in experimental group</a></li>
+            <li>
+                <a href="#1.1">1.1 Variable analysis: Control vs Experimental</a>
+                <ul>
+                    {% for variable, values in data.between.items() %}
+                        {% if values.ttest_p|default(None) is not none and values.ttest_p < 0.05 %}
+                            <li>
+                                <a href="#1.1-{{variable}}">{{variable}}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
+            <li>
+                <a href="#1.2">1.2 CPS analysis: Control vs Experimental</a>
+                <ul>
+                    {% for variable, values in data.cps_between.items() %}
+                        {% if values.ttest_p|default(None) is not none and values.ttest_p < 0.05 %}
+                            <li>
+                                <a href="#1.2-{{variable}}">{{variable}}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
+            <li>
+                <a href="#2.1">2.1 Variable analysis: ppgender in experimental group</a>
+                <ul>
+                    {% for variable, values in data.within.ppgender.items() %}
+                        {% if values.ttest_p|default(None) is not none and values.ttest_p < 0.05 %}
+                            <li>
+                                <a href="#2.1-{{variable}}">{{variable}}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
+            <li>
+                <a href="#2.2">2.2 CPS analysis: CPS in experimental group</a>
+                <ul>
+                    {% for variable, values in data.cps_within.items() %}
+                        {% if values.ttest_p|default(None) is not none and values.ttest_p < 0.05 %}
+                            <li>
+                                <a href="#2.2-{{variable}}">{{variable}}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
         </ul>
     </div>
 
@@ -63,7 +108,7 @@
 
     {% for variable, values in data.between.items() %}
 
-    <div>
+    <div id="1.1-{{variable}}">
         <h2 class="mt-5">{{variable}}</h2>
         <hr />
 
@@ -260,7 +305,7 @@
 
     {% for variable, values in data.cps_between.items() %}
 
-    <div>
+    <div id="1.2-{{variable}}">
         <h2 class="mt-5">{{variable}}</h2>
         <hr />
 
@@ -427,7 +472,7 @@
 
     {% for variable, values in data.within.ppgender.items() %}
 
-    <div>
+    <div id="2.1-{{variable}}">
         <h2 class="mt-5">{{variable}}</h2>
         <hr />
 
@@ -684,7 +729,7 @@
 
     {% for variable, values in data.cps_within.items() %}
 
-    <div>
+    <div id="2.2-{{variable}}">
         <h2 class="mt-5">{{variable}}</h2>
         <hr />
         <!-- Shapiro Wilk -->
