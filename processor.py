@@ -117,6 +117,10 @@ def filter_ids(form1, form2, metrics, tagging):
     # now that we have all valid ids filtered from metrics and form files, we need to filter with the tagging file
     valid_ids = set(valid_ids).intersection(set(tagging["id"]))
 
+    # If there are no valid ids, throw an error
+    if len(valid_ids) == 0:
+        raise ValueError("No valid after filters")
+
     # filter all files with real valid ids
     metrics = metrics[metrics["id"].isin(valid_ids)]
     form1 = form1[form1["id"].isin(valid_ids)]
