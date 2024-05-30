@@ -194,7 +194,8 @@ def api_session_analysis(session_name):
             return jsonify({'message': 'Form2 not found!'}), 400
         reviewers = json.loads(request.form.get('reviewers'))
         if not reviewers:
-            return jsonify({'message': 'No reviewers supplied'}), 400
+            return jsonify({'message': 'No reviewers supplied'}),
+        main_reviewer = request.form.get('mainReviewer')
 
         form1_df = None
         try:
@@ -214,7 +215,7 @@ def api_session_analysis(session_name):
         if 'error' in twincode_df:
             return jsonify(twincode_df['error']), 500
 
-        tagachat_df = get_tagachat_data(session_name, reviewers)
+        tagachat_df = get_tagachat_data(session_name, reviewers, main_reviewer)
         if 'error' in tagachat_df:
             return jsonify(tagachat_df['error']), 500
 
@@ -244,6 +245,7 @@ def api_custom_analysis():
         analysis_name = request.form.get('name')
         if not analysis_name:
             return jsonify({'message': 'No analysis name supplied'}), 400
+        main_reviewer = json.loads(request.form.get('mainReviewer'))
         
         selected_sessions = list(reviewers.keys())
         
@@ -273,7 +275,7 @@ def api_custom_analysis():
             else:
                 twincode_df = pd.concat([twincode_df, twincode_data])
         
-            tagachat_data = get_tagachat_data(session_name, reviewers[session_name])
+            tagachat_data = get_tagachat_data(session_name, reviewers[session_name], main_reviewer[session_name])
             if 'error' in tagachat_data:
                 return jsonify(tagachat_data['error']), 500
             if tagachat_df is None:
@@ -350,7 +352,10 @@ def get_tc_data(session_name):
     return df
 
 
-def get_tagachat_data(session_name, reviewers=None):
+def get_tagachat_data(session_name, reviewers=None, main_reviewer=None):
+
+    main_reviewer = main_reviewer if main_reviewer and main_reviewer.strip() else None
+
     tagachat_url = os.environ.get(
         'TAGACHAT_API_URL') + '/analytics/' + session_name
 
@@ -370,16 +375,35 @@ def get_tagachat_data(session_name, reviewers=None):
         return {'error': 'Error parsing tagachat data for ' + session_name}
 
     df = pd.DataFrame(tagachat_data)
-    # Eliminar columna session, room, reviewer y renombrar columna participant por id
-    df = df.drop(columns=['session', 'room', 'reviewer'])
+
+    # Renombrar columna participant por id
     df = df.rename(columns={'participant': 'id'})
+
+    # convertir columna percent a numero
+    try:
+        df['percent'] = df['percent'].astype(float)
+    except:
+        return {'error': 'Error converting tagachat data to numbers'}
+    
+    # Eliminar filas donde "percent" no sea 100
+    df = df[df['percent'] == 100]
+
+    if main_reviewer:
+        # Filtrar solo las filas donde el reviewer sea el main_reviewer en cada id y time, en otro caso tomar la primera fila
+        df = df.groupby(['id', 'time']).apply(lambda g: g[g['reviewer'] == main_reviewer].head(1) if (g['reviewer'] == main_reviewer).any() else g.head(1)).reset_index(drop=True)
+    
+    # Eliminar columna session, room, reviewer, percent y renombrar columna participant por id
+    df = df.drop(columns=['session', 'room', 'reviewer', 'percent'])
+
     # Convertir las columnas a partir de la tercera a numeros
     try:
         df.iloc[:, 2:] = df.iloc[:, 2:].astype(float)
     except:
         return {'error': 'Error converting tagachat data to numbers'}
-    # Hacer la media de las columnas a partir de la segunda, agrupando por id y time
-    df = df.groupby(['id', 'time']).mean().reset_index()
+
+    if not main_reviewer:
+        # Hacer la media de las columnas a partir de la segunda, agrupando por id y time
+        df = df.groupby(['id', 'time']).mean().reset_index()
 
     return df
 

@@ -23,6 +23,7 @@ const app = {
             rooms: null,
             reviewers: null,
             selectedReviewers: null,
+            mainReviewer: "",
             loadingReviewers: true,
             collectingData: false,
             form1Error: null,
@@ -263,6 +264,7 @@ const app = {
             this.rooms = {};
             this.reviewers = {};
             this.selectedReviewers = {};
+            this.mainReviewer = {};
             let promises = [];
 
             for(const session of this.selectedSessions) {
@@ -291,11 +293,14 @@ const app = {
 
                     this.selectedReviewers[session] = Array.from(this.reviewers[session]);
 
+                    this.mainReviewer[session] = "";
+
                 })
                 .catch(error => {
                     this.rooms[session] = [];
                     this.reviewers[session] = new Set();
                     this.selectedReviewers[session] = [];
+                    this.mainReviewer[session] = "";
                 });
                 promises.push(promise);
             }
@@ -330,6 +335,7 @@ const app = {
             this.rooms = null;
             this.reviewers = null;
             this.selectedReviewers = null;
+            this.mainReviewer = "";
         },
 
         handleFileUpload(event, formName) {
@@ -412,7 +418,9 @@ const app = {
             formData.append('form1', this.form1);
             formData.append('form2', this.form2);
             formData.append('reviewers', JSON.stringify(this.selectedReviewers));
-
+            if (this.mainReviewer && this.mainReviewer.trim() !== '') {
+                formData.append('mainReviewer', this.mainReviewer);
+            }
             fetch('/api/analysis/' + session.name, {
                 method: 'POST',
                 body: formData,
@@ -452,6 +460,7 @@ const app = {
             formData.append('form2', this.form2);
             formData.append('reviewers', JSON.stringify(this.selectedReviewers));
             formData.append('name', this.customName);
+            formData.append('mainReviewer', JSON.stringify(this.mainReviewer));
 
             fetch('/api/analysis/custom', {
                 method: 'POST',

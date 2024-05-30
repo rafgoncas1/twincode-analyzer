@@ -51,6 +51,12 @@
                         <div class="alert alert-danger" role="alert" v-if="selectedReviewers && selectedReviewers.length<1">
                             Please select at least one reviewer.
                         </div>
+                        <h5 class="font-weight-bold">Main reviewer</h5>
+                        <p>Select the main reviewer for the session. If none is selected, Tagachat data will be processed by taking the average of all reviewers.</p>
+                        <select v-model="mainReviewer" class="form-control">
+                            <option value="">None</option>
+                            <option v-for="reviewer in selectedReviewers" :key="reviewer" :value="reviewer">[[reviewer]]</option>
+                        </select>
                     </div>
                     <div v-else>
                         <div class="alert alert-danger" role="alert">
