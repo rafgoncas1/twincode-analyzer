@@ -13,4 +13,5 @@ jobs:
             username: ${{ secrets.SSH_USERNAME }}
             key: ${{ secrets.SSH_KEY }}
             script: | 
+                echo "${{ secrets.ENV }}" > /home/${{ secrets.SSH_USERNAME }}/twincode-analyzer/.env
                 /home/${{ secrets.SSH_USERNAME }}/deploy.sh
