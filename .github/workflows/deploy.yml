@@ -1,12 +1,12 @@
-name: SSH Remote Connection
+name: Deploy on ec2
 on: [push]
 
 jobs:
     build:
-        name: Check SSH connection
+        name: Deploy
         runs-on: ubuntu-latest
         steps:
-        - name: SSH check
+        - name: Connect to SSH and deploy
           uses: appleboy/ssh-action@master
           with:
             host: ${{ secrets.SSH_HOST }}
