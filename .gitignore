@@ -9,3 +9,5 @@ __pycache__/
 
 # Analysis files
 analysis/**
+
+nohup.out
