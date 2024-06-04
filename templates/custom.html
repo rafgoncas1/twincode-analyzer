@@ -1,10 +1,10 @@
 {% extends "main.html" %}
 
 {% block content %}
-    <div class="bg-white p-5 rounded shadow">
+    <div class="bg-white p-2 p-lg-5 rounded shadow">
         <h1 class="text-center">New Custom Analysis</h1>
         <hr>
-        <div class="m-5" v-if="!nextPage">
+        <div class="my-5" v-if="!nextPage">
             <label for="customName" class="font-weight-bold">Custom Analysis Name</label>
             <input id="customName" type="text" class="form-control w-50 mb-2" v-model="customName" placeholder="Custom analysis name">
             <div style="height: 30px;">
@@ -56,7 +56,7 @@
                 <button @click="nextPage = true; fetchCustomReviewers();" class="btn btn-success" :disabled="!customName || customName && analyses.some(analysis => analysis.name == customName) || !selectedSessions || selectedSessions.length<2">Next page</button>
             </div>
         </div>
-        <div class="m-5" v-else>
+        <div class="my-5" v-else>
             <p><b  class="text-warning">Important!</b> Upload <b>forms 1 and 2</b> from the [[customName]] analysis. Ensure both forms are in <b>.csv</b> format.</p>
             <br>
 
