@@ -426,19 +426,15 @@ const app = {
                 body: formData,
             })
             .then(response => {
-
+                this.collectingData = false;
+                this.form1 = null;
+                this.form2 = null;
                 if (response.status != 202) {
-                    this.collectingData = false;
-                    this.form1 = null;
-                    this.form2 = null;
                     this.showModal = true;
                     return response.json().then(data => {
                         throw new Error(data);
                     });
                 }
-                this.collectingData = false;
-                this.form1 = null;
-                this.form2 = null;
                 this.modalSession = null;
             })
             .catch((error) => {
