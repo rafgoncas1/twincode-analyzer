@@ -36,11 +36,13 @@ def process_form1(df):
     # column for the mean of the pptc
     df.insert(10, "pptc", df[pptc_names].mean(axis=1))
 
+    # If duplicates, keep the last one
+    df = df.drop_duplicates(subset=["id"], keep="last")
+
     return df
 
 
 def process_form2(df):
-
     # create new names for the columns
     pp_names = ["pp" + str(i) for i in range(1, 5)]
     pptc_names = ["pptc" + str(i) for i in range(1, 5)]
@@ -93,6 +95,9 @@ def process_form2(df):
                                                  np.where(df["av"] == "no", "none",
                                                           np.where(df["av"] == "idr", "idr", np.nan)))))
 
+    # If duplicates, keep the last one
+    df = df.drop_duplicates(subset=["id"], keep="last")
+
     return df
 
 def filter_ids(form1, form2, metrics, tagging):
@@ -115,7 +120,8 @@ def filter_ids(form1, form2, metrics, tagging):
     valid_ids = set(valid_pairs_t1["id"]).intersection(set(valid_pairs_t2["id"]))
 
     # now that we have all valid ids filtered from metrics and form files, we need to filter with the tagging file
-    valid_ids = set(valid_ids).intersection(set(tagging["id"]))
+    if tagging is not None:
+        valid_ids = set(valid_ids).intersection(set(tagging["id"]))
 
     # If there are no valid ids, throw an error
     if len(valid_ids) == 0:
@@ -125,7 +131,8 @@ def filter_ids(form1, form2, metrics, tagging):
     metrics = metrics[metrics["id"].isin(valid_ids)]
     form1 = form1[form1["id"].isin(valid_ids)]
     form2 = form2[form2["id"].isin(valid_ids)]
-    tagging = tagging[tagging["id"].isin(valid_ids)]
+    if tagging is not None:
+        tagging = tagging[tagging["id"].isin(valid_ids)]
     
     return form1, form2, metrics, tagging
 
@@ -135,7 +142,8 @@ def join_files(form1, form2, metrics, tagging):
     
     # ATTRIBUTES AT T1
     metrics_t1 = metrics[metrics["time"] == "t1"]
-    tagging_t1 = tagging[tagging["time"] == "t1"]
+    if tagging is not None:
+        tagging_t1 = tagging[tagging["time"] == "t1"]
 
     # get ppgender_t1 and ppgender_t2 from form2
     ppgender_t1 = form2[["id", "ppgender1"]]
@@ -145,16 +153,17 @@ def join_files(form1, form2, metrics, tagging):
     move = metrics_t1.pop("ppgender1")
     metrics_t1.insert(4, "ppgender", move)
 
-
     # add questionnaire 1 to metrics_t1
     metrics_t1 = metrics_t1.join(form1.set_index("id"), on="id", how="inner")
 
     # add tagging_t1 to metrics_t1
-    metrics_t1 = pd.merge(metrics_t1, tagging_t1, on=["id", "time"])
+    if tagging is not None:
+        metrics_t1 = pd.merge(metrics_t1, tagging_t1, on=["id", "time"])
 
     # ATTRIBUTES AT T2
     metrics_t2 = metrics[metrics["time"] == "t2"]
-    tagging_t2 = tagging[tagging["time"] == "t2"]
+    if tagging is not None:
+        tagging_t2 = tagging[tagging["time"] == "t2"]
 
     # get ppgender_t2 from form2
     ppgender_t2 = form2[["id", "ppgender2"]]
@@ -166,11 +175,10 @@ def join_files(form1, form2, metrics, tagging):
     metrics_t2 = pd.merge(metrics_t2, form2.drop(columns=cps_names+["av", "ppgender1", "ppgender2"]), on="id")
 
     # add tagging_t2 to metrics_t2
-    metrics_t2 = pd.merge(metrics_t2, tagging_t2, on=["id", "time"])
-
+    if tagging is not None:
+        metrics_t2 = pd.merge(metrics_t2, tagging_t2, on=["id", "time"])
     # create long format from metrics_t1 and metrics_t2
     long_df = pd.concat([metrics_t1, metrics_t2], ignore_index=True)
-    
     return long_df
 
 def filter_gender_perception(long_df):
