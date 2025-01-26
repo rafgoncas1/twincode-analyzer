@@ -1,156 +1,180 @@
 {% extends "main.html" %}
 
 {% block content %}
-    <div v-if="isLoading" class="d-flex justify-content-center align-items-center">
-        <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
+<div v-if="isLoading" class="d-flex justify-content-center align-items-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
     </div>
-    <div v-if="showModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click="closeModal">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" @click.stop>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title font-weight-bold">[[ modalSession.name ]]</h3>
-                    <button type="button" class="close" aria-label="Close" @click="closeModal">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p><b  class="text-warning">Important!</b> Upload <b>forms 1 and 2</b> from the [[modalSession.name]] session. Ensure both forms are in <b>.csv</b> format.</p>
-                    <br>
-                    <h5 class="font-weight-bold">Form 1</h5>
-                    <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_1.csv') }}" target="_blank">this</a>.</p>
-                    <input type="file" @change="handleFileUpload($event, 'form1')" class="form-control" accept=".csv" id="formFile1">
-                    <div class="alert alert-danger mt-3" role="alert" v-if="form1Error">
-                        [[form1Error]]
-                    </div>
-                    <br>
-                    <h5 class="font-weight-bold">Form 2</h5>
-                    <p>Make sure the structure of the csv is similar to <a href="{{ url_for('static', filename='/csv/Form_2.csv') }}" target="_blank">this</a>.</p>
-                    <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv" id="formFile2">
-                    <div class="alert alert-danger mt-3" role="alert" v-if="form2Error">
-                        [[form2Error]]
-                    </div>
-                    <br>
-                    <h5 class="font-weight-bold">Reviewers</h5>
-                    <div v-if="loadingReviewers" class="d-flex justify-content-center align-items-center">
-                        <div class="spinner-border" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                    <div v-else-if="reviewers && reviewers.size>0">
-                        <div class="d-flex flex-row flex-wrap">
-                            <div v-for="reviewer in reviewers" :key="reviewer" class="d-flex flex-row align-items-center mr-3">
-                                <input type="checkbox" :id="reviewer" :value="reviewer" v-model="selectedReviewers">
-                                <label :for="reviewer" class="ml-2">[[reviewer]]</label>
-                            </div>
-                        </div>
-                        <div class="alert alert-warning" role="alert" v-if="unreviewedRooms && unreviewedRooms.length > 0">
-                            <strong>Warning!</strong> The following rooms have not been reviewed by any of the selected reviewers: <b>[[unreviewedRooms]]</b>
-                        </div>
-                        <div class="alert alert-danger" role="alert" v-if="selectedReviewers && selectedReviewers.length<1">
-                            Please select at least one reviewer.
-                        </div>
-                        <h5 class="font-weight-bold">Main reviewer</h5>
-                        <p>Select the main reviewer for the session. If none is selected, Tagachat data will be processed by taking the average of all reviewers.</p>
-                        <select v-model="mainReviewer" class="form-control">
-                            <option value="">None</option>
-                            <option v-for="reviewer in selectedReviewers" :key="reviewer" :value="reviewer">[[reviewer]]</option>
-                        </select>
-                    </div>
-                    <div v-else>
-                        <div class="alert alert-danger" role="alert">
-                            <strong>Warning!</strong> There are no reviews available for the [[modalSession.name]] session.
-                        </div>
-                    </div>
-                    <br>
-                    <div class="d-flex justify-content-end align-items-center">
-                        <p class="text-danger my-auto mx-3" v-if="modalSession.status != 'pending'" >
-                            This action will remove the previous analysis of the session.
-                        </p>
-                        <button @click="startSessionAnalysis(modalSession)" class="btn btn-success" :disabled="!form1 || !form2 || !selectedReviewers || selectedReviewers.length<1">Start Analysis</button>
-                    </div>
-                </div>
+</div>
+<div v-if="showModal" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);"
+    @click="closeModal">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" @click.stop>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title font-weight-bold">[[ modalSession.name ]]</h3>
+                <button type="button" class="close" aria-label="Close" @click="closeModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-        </div>
-    </div>
-    <div v-if="collectingData" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title font-weight-bold">Starting [[ modalSession.name ]] analysis</h3>
+            <div class="modal-body">
+                <p><b class="text-warning">Important!</b> Upload <b>forms 1 and 2</b> from the [[modalSession.name]]
+                    session. Ensure both forms are in <b>.csv</b> format.</p>
+                <br>
+                <h5 class="font-weight-bold">Form 1</h5>
+                <p>Make sure the structure of the csv is similar to <a
+                        href="{{ url_for('static', filename='/csv/Form_1.csv') }}" target="_blank">this</a>.</p>
+                <input type="file" @change="handleFileUpload($event, 'form1')" class="form-control" accept=".csv"
+                    id="formFile1">
+                <div class="alert alert-danger mt-3" role="alert" v-if="form1Error">
+                    [[form1Error]]
                 </div>
-                <div class="modal-body">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <div class="spinner-border" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
+                <br>
+                <h5 class="font-weight-bold">Form 2</h5>
+                <p>Make sure the structure of the csv is similar to <a
+                        href="{{ url_for('static', filename='/csv/Form_2.csv') }}" target="_blank">this</a>.</p>
+                <input type="file" @change="handleFileUpload($event, 'form2')" class="form-control" accept=".csv"
+                    id="formFile2">
+                <div class="alert alert-danger mt-3" role="alert" v-if="form2Error">
+                    [[form2Error]]
+                </div>
+                <br>
+                <h5 class="font-weight-bold">Reviewers</h5>
+                <div v-if="loadingReviewers" class="d-flex justify-content-center align-items-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                <div class="text-center mt-3 mb-3">
-                    <p>Please wait while we collect data from Twincode and Tagachat</p>
+                <div v-else-if="reviewers && reviewers.size>0">
+                    <div class="d-flex flex-row flex-wrap">
+                        <div v-for="reviewer in reviewers" :key="reviewer"
+                            class="d-flex flex-row align-items-center mr-3">
+                            <input type="checkbox" :id="reviewer" :value="reviewer" v-model="selectedReviewers">
+                            <label :for="reviewer" class="ml-2">[[reviewer]]</label>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning" role="alert" v-if="unreviewedRooms && unreviewedRooms.length > 0">
+                        <strong>Warning!</strong> The following rooms have not been reviewed by any of the selected
+                        reviewers: <b>[[unreviewedRooms]]</b>
+                    </div>
+                    <div class="alert alert-danger" role="alert" v-if="selectedReviewers && selectedReviewers.length<1">
+                        Please select at least one reviewer.
+                    </div>
+                    <h5 class="font-weight-bold">Main reviewer</h5>
+                    <p>Select the main reviewer for the session. If none is selected, Tagachat data will be processed by
+                        taking the average of all reviewers.</p>
+                    <select v-model="mainReviewer" class="form-control">
+                        <option value="">None</option>
+                        <option v-for="reviewer in selectedReviewers" :key="reviewer" :value="reviewer">[[reviewer]]
+                        </option>
+                    </select>
+                </div>
+                <div v-else>
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Warning!</strong> There are no reviews available for the [[modalSession.name]] session.
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex justify-content-end align-items-center">
+                    <p class="text-danger my-auto mx-3" v-if="modalSession.status != 'pending'">
+                        This action will remove the previous analysis of the session.
+                    </p>
+                    <button @click="startSessionAnalysis(modalSession)" class="btn btn-success"
+                        :disabled="!form1 || !form2 || selectedReviewers && selectedReviewers.length<1">Start
+                        Analysis</button>
                 </div>
             </div>
         </div>
     </div>
-    <div class="filters" v-if="!isLoading && analyses.length > 0">
-        <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-            <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control mb-2 mb-md-0 mr-5" style="max-width: 100%; height: 50px; border: black 1px solid;">
-            <div class="d-flex flex-row">
-                <button id="filter-button" @click="nextStatusFilter" class="btn-filter mb-2 mr-2" style="width: 130px; height: 50px; text-transform: capitalize;">[[statusFilter]]</button>
-                <button id="filter-button" @click="favourites = !favourites" class="material-icons btn-filter mb-2 mr-2" style="height: 50px;" v-bind:style="{ color: favourites ? 'gold' : 'black' }">star</button>        
-                <button id="filter-button" @click="removeFilters" class="material-icons btn-filter mb-2 mr-2 trash" style="height: 50px;">delete</button>
+</div>
+<div v-if="collectingData" class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title font-weight-bold">Starting [[ modalSession.name ]] analysis</h3>
             </div>
-        </div>
-        <hr>
-    </div>
-    <div class="grid-container" v-if="!isLoading && analyses.length > 0">
-        <div class="card p-3 mb-2 shadow" style="height: 260px;">
-            <h3 class="heading font-weight-bold mt-2 text-center">CUSTOM ANALYSIS</h3>
-            <p class="mt-4 text-center">
-                Select various sessions and start an analysis with joined data
-            </p>
-            <div class="d-flex justify-content-center align-items-center h-100">
-                <a href="/custom">
-                    <button class="material-icons btn btn-light" style="height: 80px ;width: 80px;border-radius: 50%; font-size: 50px;">add_circle</button>
-                </a>
-            </div>
-        </div>
-        <div v-for="analysis in filteredAnalyses" :key="analysis.name" class="card p-3 mb-2 shadow" style="height: 260px;">
-            <div class="d-flex justify-content-between">
-                <div class="d-flex flex-row align-items-center">
-                    <button @click="addRemoveFavourite(analysis)" class="material-icons btn btn-light btn-circle" style="font-size:30px;" v-bind:style="{ color: analysis.favourite ? 'gold' : 'black' }">star</button>
-                </div>
-                <div class="badge" v-if="analysis.status=='completed'"> <span data-color="green">Analyzed</span> </div>
-                <div class="badge" v-else-if="analysis.status=='running'"> 
-                    <span data-color="blue">Running</span> 
-                </div>
-                <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
-            </div>
-            <div class="mt-5">
-                <h3 class="heading font-weight-bold">[[analysis.name]]</h3>
-                <div class="mt-5" v-if="analysis.status=='running'">
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: analysis.percentage + '%' }" :aria-valuenow="analysis.percentage" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <span class="text1">Analyzing...</span> 
-                </div>
-                <div class="mt-5" v-else-if="analysis.status=='completed'">
-                    <div class="d-flex flex-row justify-content-between align-items-center">
-                        <div class="d-flex flex-row">
-                            <button @click="viewAnalysis(analysis)" class="btn btn-success mr-3" style="height: 40px;">View</button>
-                            <button v-if="!analysis.custom" @click="fetchReviewers(analysis.name); openModal(analysis);" class="btn btn-danger" style="height: 40px;">Restart</button>
-                        </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                <div class="mt-5" v-else>
-                    <div class="d-flex flex-row justify-content-between align-items-center">
-                        <div class="d-flex flex-row">
-                            <button @click="fetchReviewers(analysis.name); openModal(analysis);" class="btn btn-primary" style="height: 40px;">Start</button>
-                        </div>
-                    </div>
-                </div>
+            </div>
+            <div class="text-center mt-3 mb-3">
+                <p>Please wait while we collect data from Twincode and Tagachat</p>
             </div>
         </div>
     </div>
+</div>
+<div class="filters" v-if="!isLoading && analyses.length > 0">
+    <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
+        <input type="text" v-model="searchTerm" placeholder="Search..." class="form-control mb-2 mb-md-0 mr-5"
+            style="max-width: 100%; height: 50px; border: black 1px solid;">
+        <div class="d-flex flex-row">
+            <button id="filter-button" @click="nextStatusFilter" class="btn-filter mb-2 mr-2"
+                style="width: 130px; height: 50px; text-transform: capitalize;">[[statusFilter]]</button>
+            <button id="filter-button" @click="favourites = !favourites" class="material-icons btn-filter mb-2 mr-2"
+                style="height: 50px;" v-bind:style="{ color: favourites ? 'gold' : 'black' }">star</button>
+            <button id="filter-button" @click="removeFilters" class="material-icons btn-filter mb-2 mr-2 trash"
+                style="height: 50px;">delete</button>
+        </div>
+    </div>
+    <hr>
+</div>
+<div class="grid-container" v-if="!isLoading && analyses.length > 0">
+    <div class="card p-3 mb-2 shadow" style="height: 260px;">
+        <h3 class="heading font-weight-bold mt-2 text-center">CUSTOM ANALYSIS</h3>
+        <p class="mt-4 text-center">
+            Select various sessions and start an analysis with joined data
+        </p>
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <a href="/custom">
+                <button class="material-icons btn btn-light"
+                    style="height: 80px ;width: 80px;border-radius: 50%; font-size: 50px;">add_circle</button>
+            </a>
+        </div>
+    </div>
+    <div v-for="analysis in filteredAnalyses" :key="analysis.name" class="card p-3 mb-2 shadow" style="height: 260px;">
+        <div class="d-flex justify-content-between">
+            <div class="d-flex flex-row align-items-center">
+                <button @click="addRemoveFavourite(analysis)" class="material-icons btn btn-light btn-circle"
+                    style="font-size:30px;"
+                    v-bind:style="{ color: analysis.favourite ? 'gold' : 'black' }">star</button>
+            </div>
+            <div class="badge" v-if="analysis.status=='completed'"> <span data-color="green">Analyzed</span> </div>
+            <div class="badge" v-else-if="analysis.status=='running'">
+                <span data-color="blue">Running</span>
+            </div>
+            <div class="badge" v-else> <span data-color="red">Not Analyzed</span> </div>
+        </div>
+        <div class="mt-5">
+            <h3 class="heading font-weight-bold">[[analysis.name]]</h3>
+            <div class="mt-5" v-if="analysis.status=='running'">
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        :style="{ width: analysis.percentage + '%' }" :aria-valuenow="analysis.percentage"
+                        aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <span class="text1">Analyzing...</span>
+            </div>
+            <div class="mt-5" v-else-if="analysis.status=='completed'">
+                <div class="d-flex flex-row justify-content-between align-items-center">
+                    <div class="d-flex flex-row">
+                        <button @click="viewAnalysis(analysis)" class="btn btn-success mr-3"
+                            style="height: 40px;">View</button>
+                        <button v-if="!analysis.custom" @click="fetchReviewers(analysis.name); openModal(analysis);"
+                            class="btn btn-danger" style="height: 40px;">Restart</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5" v-else>
+                <div class="d-flex flex-row justify-content-between align-items-center">
+                    <div class="d-flex flex-row">
+                        <button @click="fetchReviewers(analysis.name); openModal(analysis);" class="btn btn-primary"
+                            style="height: 40px;">Start</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
