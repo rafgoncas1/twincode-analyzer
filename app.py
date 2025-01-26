@@ -193,10 +193,7 @@ def api_session_analysis(session_name):
         if not form2:
             return jsonify({'message': 'Form2 not found!'}), 400
         reviewers = json.loads(request.form.get('reviewers'))
-        if not reviewers:
-            return jsonify({'message': 'No reviewers supplied'}),
         main_reviewer = request.form.get('mainReviewer')
-
         form1_df = None
         try:
             form1_data = BytesIO(form1.read())
@@ -217,7 +214,7 @@ def api_session_analysis(session_name):
 
         tagachat_df = get_tagachat_data(session_name, reviewers, main_reviewer)
         if 'error' in tagachat_df:
-            return jsonify(tagachat_df['error']), 500
+            tagachat_df = None
 
         session.status = 'running'
         session.percentage = 1
@@ -240,8 +237,6 @@ def api_custom_analysis():
         if not form2:
             return jsonify({'message': 'Form2 not found!'}), 400
         reviewers = json.loads(request.form.get('reviewers'))
-        if not reviewers:
-            return jsonify({'message': 'No reviewers supplied'}), 400
         analysis_name = request.form.get('name')
         if not analysis_name:
             return jsonify({'message': 'No analysis name supplied'}), 400
@@ -274,10 +269,9 @@ def api_custom_analysis():
                 twincode_df = twincode_data
             else:
                 twincode_df = pd.concat([twincode_df, twincode_data])
-        
             tagachat_data = get_tagachat_data(session_name, reviewers[session_name], main_reviewer[session_name])
             if 'error' in tagachat_data:
-                return jsonify(tagachat_data['error']), 500
+                tagachat_data = None
             if tagachat_df is None:
                 tagachat_df = tagachat_data
             else:
@@ -510,7 +504,7 @@ def start_analysis(analysis_name, form1_df, form2_df, twincode_df, tagachat_df):
         cps_df.to_csv("analysis/" + analysis_name + "/cps_df.csv", index=False)
         
         # List of names of the columns which are numeric
-        excluded = ["okv","okv_rf","kov","kov_rf", "ct_sec", "ct", "ct_rf"] # Exclude some irrelevant variables
+        excluded = ["okv","okv_rf","kov","kov_rf"] # Exclude some irrelevant variables
         variables = set(long_df.select_dtypes(include=['int64', 'float64']).columns)
         variables = variables.difference(excluded)
 
@@ -588,6 +582,12 @@ def analysis_completed(analysis_name):
         db.session.commit()
         socket.emit('analysisCompleted', {'name': analysis.name})
 
+@app.template_filter('safe_format')
+def safe_format(value):
+    try:
+        return f"{float(value):.4f}"
+    except (ValueError, TypeError):
+        return value
 
 if __name__ == '__main__':
     app.run()
