@@ -80,7 +80,7 @@ const app = {
                 return {};
             }
             res = {};
-            for (const [key,value] of Object.entries(this.rooms)) {
+            for (const [key, value] of Object.entries(this.rooms)) {
                 res[key] = value.filter(room => {
                     for (const block of room.blocks) {
                         unreviewedBlock = true;
@@ -93,7 +93,7 @@ const app = {
                     }
                     return unreviewedBlock;
                 })
-                .map(room => room.roomId);
+                    .map(room => room.roomId);
             }
             return res;
         }
@@ -132,23 +132,23 @@ const app = {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({password: this.password})
+                body: JSON.stringify({ password: this.password })
             })
-            .then(response => {
-                if (response.status == 200) {
-                    return response.json();
-                }
-                throw new Error('Login failed');
-            })
-            .then(data => {
-                this.successMessage = data.message;
-                setTimeout(function() {
-                    window.location.href = '/';
-                }, 2000);
-            })
-            .catch(error => {
-                this.errorMessage = error.message;
-            });
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json();
+                    }
+                    throw new Error('Login failed');
+                })
+                .then(data => {
+                    this.successMessage = data.message;
+                    setTimeout(function () {
+                        window.location.href = '/';
+                    }, 2000);
+                })
+                .catch(error => {
+                    this.errorMessage = error.message;
+                });
         },
 
         logout() {
@@ -158,20 +158,20 @@ const app = {
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => {
-                if (response.status == 200) {
-                    return response.json();
-                }
-                throw new Error('Logout failed');
-            })
-            .then(data => {
-                this.successMessage = data.message;
-                socket.disconnect();
-                window.location.href = '/';
-            })
-            .catch(error => {
-                this.errorMessage = error.message;
-            });
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json();
+                    }
+                    throw new Error('Logout failed');
+                })
+                .then(data => {
+                    this.successMessage = data.message;
+                    socket.disconnect();
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    this.errorMessage = error.message;
+                });
         },
 
         closeNotification() {
@@ -180,23 +180,23 @@ const app = {
 
         fetchAnalyses() {
             fetch('/api/analyses')
-            .then(response => {
-                if (response.status == 200) {
-                    return response.json();
-                }
-                throw new Error('Fetch analyses failed');
-            })
-            .then(data => {
-                this.analyses = data;
-                if (window.location.pathname == '/custom') {
-                    this.sessions = data.filter(analysis => !analysis.custom).map(analysis => {return analysis.name});
-                }
-                this.isLoading = false;
-            })
-            .catch(error => {
-                this.notification = {title: "Error", message: error.message, error: true};
-                this.isLoading = false;
-            });
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json();
+                    }
+                    throw new Error('Fetch analyses failed');
+                })
+                .then(data => {
+                    this.analyses = data;
+                    if (window.location.pathname == '/custom') {
+                        this.sessions = data.filter(analysis => !analysis.custom).map(analysis => { return analysis.name });
+                    }
+                    this.isLoading = false;
+                })
+                .catch(error => {
+                    this.notification = { title: "Error", message: error.message, error: true };
+                    this.isLoading = false;
+                });
         },
 
         addRemoveFavourite(analysis) {
@@ -206,16 +206,16 @@ const app = {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({favourite: newStatus})
+                body: JSON.stringify({ favourite: newStatus })
             })
-            .then(response => {
-                if (response.status != 200) {
-                    throw new Error("Failed to update favourite status for " + analysis.name);
-                }
-            })
-            .catch((error) => {
-                this.notification = {title: analysis.name, message: error.message, error: true};
-            });
+                .then(response => {
+                    if (response.status != 200) {
+                        throw new Error("Failed to update favourite status for " + analysis.name);
+                    }
+                })
+                .catch((error) => {
+                    this.notification = { title: analysis.name, message: error.message, error: true };
+                });
         },
 
         nextStatusFilter() {
@@ -233,30 +233,30 @@ const app = {
         fetchReviewers(sessionName) {
             this.loadingReviewers = true;
             fetch('https://tagachat.vercel.app/api/analytics/' + sessionName + '/reviewers')
-            .then(response => {
-                if (response.status == 200) {
-                    return response.json();
-                } else {
-                    throw new Error('Failed to fetch reviewers: ' + response.status + ' ' + response.statusText);
-                }  
-            })
-            .then(data => {
-                this.rooms = data;
-                this.reviewers = new Set();
-                for (const room of this.rooms) {
-                    for (const block of room.blocks) {
-                        for (const reviewer of block.reviewers) {
-                            this.reviewers.add(reviewer.reviewer);
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json();
+                    } else {
+                        throw new Error('Failed to fetch reviewers: ' + response.status + ' ' + response.statusText);
+                    }
+                })
+                .then(data => {
+                    this.rooms = data;
+                    this.reviewers = new Set();
+                    for (const room of this.rooms) {
+                        for (const block of room.blocks) {
+                            for (const reviewer of block.reviewers) {
+                                this.reviewers.add(reviewer.reviewer);
+                            }
                         }
                     }
-                }
-                console.log(this.reviewers);
-                this.selectedReviewers = Array.from(this.reviewers);
-                this.loadingReviewers = false;
-            })
-            .catch(error => {
-                this.loadingReviewers = false;
-            });
+                    console.log(this.reviewers);
+                    this.selectedReviewers = Array.from(this.reviewers);
+                    this.loadingReviewers = false;
+                })
+                .catch(error => {
+                    this.loadingReviewers = false;
+                });
         },
 
         fetchCustomReviewers() {
@@ -267,41 +267,41 @@ const app = {
             this.mainReviewer = {};
             let promises = [];
 
-            for(const session of this.selectedSessions) {
+            for (const session of this.selectedSessions) {
                 let promise = fetch('https://tagachat.vercel.app/api/analytics/' + session + '/reviewers')
-                .then(response => {
-                    if (response.status == 200) {
-                        return response.json();
-                    } else {
-                        throw new Error('Failed to fetch reviewers: ' + response.status + ' ' + response.statusText);
-                    }
-                })
-                .then(data => {
+                    .then(response => {
+                        if (response.status == 200) {
+                            return response.json();
+                        } else {
+                            throw new Error('Failed to fetch reviewers: ' + response.status + ' ' + response.statusText);
+                        }
+                    })
+                    .then(data => {
 
-                    this.rooms[session] = data;
+                        this.rooms[session] = data;
 
-                    const reviewersSet = new Set();
-                    for (const room of this.rooms[session]) {
-                        for (const block of room.blocks) {
-                            for (const reviewer of block.reviewers) {
-                                reviewersSet.add(reviewer.reviewer);
+                        const reviewersSet = new Set();
+                        for (const room of this.rooms[session]) {
+                            for (const block of room.blocks) {
+                                for (const reviewer of block.reviewers) {
+                                    reviewersSet.add(reviewer.reviewer);
+                                }
                             }
                         }
-                    }
 
-                    this.reviewers[session] = reviewersSet;
+                        this.reviewers[session] = reviewersSet;
 
-                    this.selectedReviewers[session] = Array.from(this.reviewers[session]);
+                        this.selectedReviewers[session] = Array.from(this.reviewers[session]);
 
-                    this.mainReviewer[session] = "";
+                        this.mainReviewer[session] = "";
 
-                })
-                .catch(error => {
-                    this.rooms[session] = [];
-                    this.reviewers[session] = new Set();
-                    this.selectedReviewers[session] = [];
-                    this.mainReviewer[session] = "";
-                });
+                    })
+                    .catch(error => {
+                        this.rooms[session] = [];
+                        this.reviewers[session] = new Set();
+                        this.selectedReviewers[session] = [];
+                        this.mainReviewer[session] = "";
+                    });
                 promises.push(promise);
             }
 
@@ -357,7 +357,7 @@ const app = {
                 },
                 error: (error) => {
                     event.target.value = null;
-                    this[formName+"Error"] = "Invalid file format: Unable to read csv"
+                    this[formName + "Error"] = "Invalid file format: Unable to read csv"
                 }
             });
         },
@@ -365,40 +365,40 @@ const app = {
         validateCSV(data, formName) {
             if (formName == 'form1') {
                 if (data.meta.fields.length != 11) {
-                    this[formName+"Error"] = "Invalid file format: Incorrect number of columns, expected 11";
+                    this[formName + "Error"] = "Invalid file format: Incorrect number of columns, expected 11";
                     return false;
                 } else {
                     var invalidColumns = []
                     var expectedToContain = ['', 'enter your', ...Array(4).fill('regarding'), ...Array(4).fill('during'), 'describe'];
                     for (let i = 1; i < 11; i++) {
                         if (!data.meta.fields[i].toLowerCase().includes(expectedToContain[i])) {
-                            invalidColumns.push(i+1);
+                            invalidColumns.push(i + 1);
                         }
                     }
                     if (invalidColumns.length > 0) {
-                        this[formName+"Error"] = "Invalid file format: Incorrect column headers at columns " + invalidColumns.join(", ");
+                        this[formName + "Error"] = "Invalid file format: Incorrect column headers at columns " + invalidColumns.join(", ");
                         return false;
                     }
                 }
             } else if (formName == 'form2') {
                 if (data.meta.fields.length != 19) {
-                    this[formName+"Error"] = "Invalid file format: Incorrect number of columns, expected 19";
+                    this[formName + "Error"] = "Invalid file format: Incorrect number of columns, expected 19";
                     return false;
                 } else {
                     var invalidColumns = []
                     var expectedToContain = ['', 'enter your', ...Array(4).fill('regarding'), ...Array(4).fill('during'), 'describe', ...Array(5).fill('comparing'), ...Array(3).fill('remember')];
                     for (let i = 1; i < 19; i++) {
                         if (!data.meta.fields[i].toLowerCase().includes(expectedToContain[i])) {
-                            invalidColumns.push(i+1);
+                            invalidColumns.push(i + 1);
                         }
                     }
                     if (invalidColumns.length > 0) {
-                        this[formName+"Error"] = "Invalid file format: Incorrect column headers at columns " + invalidColumns.join(", ");
+                        this[formName + "Error"] = "Invalid file format: Incorrect column headers at columns " + invalidColumns.join(", ");
                         return false;
                     }
                 }
             }
-            this[formName+"Error"] = null;
+            this[formName + "Error"] = null;
             return true;
         },
 
@@ -407,7 +407,7 @@ const app = {
         startSessionAnalysis(session) {
 
             if (!this.form1 || !this.form2) {
-                this.notification = {title: session.name, message: "Please select both files", error: true};
+                this.notification = { title: session.name, message: "Please select both files", error: true };
                 return;
             }
 
@@ -425,27 +425,27 @@ const app = {
                 method: 'POST',
                 body: formData,
             })
-            .then(response => {
-                this.collectingData = false;
-                this.form1 = null;
-                this.form2 = null;
-                if (response.status != 202) {
-                    this.showModal = true;
-                    return response.json().then(data => {
-                        throw new Error(data);
-                    });
-                }
-                this.modalSession = null;
-            })
-            .catch((error) => {
-                this.notification = {title: session.name, message: error.message, error: true};
-            });
+                .then(response => {
+                    this.collectingData = false;
+                    this.form1 = null;
+                    this.form2 = null;
+                    if (response.status != 202) {
+                        this.showModal = true;
+                        return response.json().then(data => {
+                            throw new Error(data.message);
+                        });
+                    }
+                    this.modalSession = null;
+                })
+                .catch((error) => {
+                    this.notification = { title: session.name, message: error.message, error: true };
+                });
         },
 
         startCustomAnalysis() {
 
             if (!this.form1 || !this.form2) {
-                this.notification = {title: "Custom Analysis", message: "Please select both files", error: true};
+                this.notification = { title: "Custom Analysis", message: "Please select both files", error: true };
                 return;
             }
 
@@ -462,23 +462,23 @@ const app = {
                 method: 'POST',
                 body: formData,
             })
-            .then(response => {
+                .then(response => {
 
-                if (response.status != 202) {
+                    if (response.status != 202) {
+                        this.collectingData = false;
+                        this.form1 = null;
+                        this.form2 = null;
+                        this.showModal = true;
+                        return response.json().then(data => {
+                            throw new Error(data.message);
+                        });
+                    }
                     this.collectingData = false;
-                    this.form1 = null;
-                    this.form2 = null;
-                    this.showModal = true;
-                    return response.json().then(data => {
-                        throw new Error(data);
-                    });
-                }
-                this.collectingData = false;
-                window.location.href = '/';
-            })
-            .catch((error) => {
-                this.notification = {title: "Custom Analysis", message: error.message, error: true};
-            });
+                    window.location.href = '/';
+                })
+                .catch((error) => {
+                    this.notification = { title: "Custom Analysis", message: error.message, error: true };
+                });
         },
 
         printPage() {
@@ -486,7 +486,7 @@ const app = {
         }
     },
 
-    
+
     beforeDestroy() {
         window.removeEventListener('scroll', this.checkScroll);
     }
@@ -497,7 +497,7 @@ const mounted = createApp(app).mount('#app')
 // Socket.io events
 
 socket.on('favouriteUpdated', (data) => {
-    mounted.notification = {title: data.name, message: data.favourite ? "Added to favourites" : "Removed from favourites"};
+    mounted.notification = { title: data.name, message: data.favourite ? "Added to favourites" : "Removed from favourites" };
     // Update favourite status in the sessions list
     mounted.analyses.forEach(analysis => {
         if (analysis.name == data.name) {
@@ -512,7 +512,7 @@ socket.on('analysisStarted', (data) => {
         closeModal();
     }
 
-    mounted.notification = {title: data.name, message: "Analysis started"};
+    mounted.notification = { title: data.name, message: "Analysis started" };
     // Update status in the sessions list
     mounted.analyses.forEach(analysis => {
         if (analysis.name == data.name) {
@@ -523,7 +523,7 @@ socket.on('analysisStarted', (data) => {
 });
 
 socket.on('analysisError', (data) => {
-    mounted.notification = {title: data.name, message: data.message, error: true};
+    mounted.notification = { title: data.name, message: data.message, error: true };
     // Update status in the sessions list
     mounted.analyses.forEach(analysis => {
         if (analysis.name == data.name) {
@@ -543,7 +543,7 @@ socket.on('percentageUpdate', (data) => {
 });
 
 socket.on('analysisCompleted', (data) => {
-    mounted.notification = {title: data.name, message: "Analysis completed"};
+    mounted.notification = { title: data.name, message: "Analysis completed" };
     // Update status in the sessions list
     mounted.analyses.forEach(analysis => {
         if (analysis.name == data.name) {
