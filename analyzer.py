@@ -18,6 +18,10 @@ def analyzeVariableBetween(variable, wide_df, session_name):
     
     control_group_distance = subset_wide[subset_wide["group"] == "ctrl"]["score_distance"]
     experimental_group_distance = subset_wide[subset_wide["group"] == "exp"]["score_distance"]
+
+    if (len(control_group_distance) == 0 or len(experimental_group_distance) == 0):
+        print("Insufficient unique values in groups")
+        return res
     
     meanc = mean(control_group_distance)
     meane = mean(experimental_group_distance)
@@ -167,6 +171,9 @@ def analyzeVariableWithin(variable, groupby, long_df, session_name):
     
     men = subset_wide[variable + "_Male"]
     women = subset_wide[variable + "_Female"]
+    if (len(men) == 0 or len(women) == 0):
+        print("Insufficient unique values in groups")
+        return res
     n = subset_wide.shape[0]
     paired_difference =  men - women
     mean_men = mean(men)
@@ -251,7 +258,7 @@ def analyzeVariableWithin(variable, groupby, long_df, session_name):
     aov = pg.mixed_anova(data=subset_long, dv=variable, within=groupby, between="gender", subject="id")
     print("\nTwo-Way Mixed model ANOVA")
     print(aov)
-    res["aov"] = aov.replace({np.nan: None}).to_dict()
+    res["aov"] = aov.replace({np.inf: "Infinite", -np.inf: "-Infinite"}).where(pd.notnull(aov), "None").to_dict()
     
     # Plotting
     colors = {"men": "#fd4659", "women": "#33b864"}
@@ -292,6 +299,10 @@ def analyzeCpsBetween(variable, cps_df, session_name):
     subset_cps = cps_df[columns_to_select].copy()
     control_group = subset_cps[subset_cps["group"]=="ctrl"][variable]
     experimental_group = subset_cps[subset_cps["group"]=="exp"][variable]
+
+    if (len(control_group) == 0 or len(experimental_group) == 0):
+        print("Insufficient unique values in groups")
+        return res
 
     mean_c = mean(control_group)
     mean_e = mean(experimental_group)
@@ -393,6 +404,10 @@ def analyzeCpsWithin(variable, cps_df, session_name):
     subset_cps = cps_df[cps_df["group"]=="exp"][columns_to_select].copy()
     men = subset_cps[subset_cps["gender"]=="Male"][variable]
     women = subset_cps[subset_cps["gender"]=="Female"][variable]
+
+    if (len(women) == 0 or len(men) == 0):
+        print("Insufficient unique values in groups")
+        return res
     
     mean_men = mean(men)
     mean_women = mean(women)
